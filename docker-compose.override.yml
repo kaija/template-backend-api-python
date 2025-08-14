@@ -1,0 +1,46 @@
+# Docker Compose override for development
+# This file is automatically loaded by docker-compose and overrides settings in docker-compose.yml
+
+services:
+  api:
+    # Override build target for development
+    build:
+      target: production
+    environment:
+      - ENV_FOR_DYNACONF=development
+      - API_ENV=development
+      - API_DEBUG=true
+      - API_LOG_LEVEL=DEBUG
+      - RUN_MIGRATIONS=false  # Don't auto-run migrations in dev
+    volumes:
+      # Mount source code for hot reload during development
+      - ./src:/app/src:ro
+      - ./config:/app/config:ro
+      - ./migrations:/app/migrations:ro
+      - ./logs:/app/logs
+    # Override command for development with reload
+    command: ["python", "-m", "uvicorn", "src.app:get_application", "--factory", "--host", "0.0.0.0", "--port", "8000", "--reload", "--log-level", "debug"]
+    
+  # Add development tools
+  adminer:
+    image: adminer:latest
+    ports:
+      - "8080:8080"
+    environment:
+      ADMINER_DEFAULT_SERVER: postgres
+    networks:
+      - api-network
+    profiles:
+      - dev-tools
+
+  # Redis Commander for Redis management
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    ports:
+      - "8081:8081"
+    environment:
+      REDIS_HOSTS: local:redis:6379
+    networks:
+      - api-network
+    profiles:
+      - dev-tools

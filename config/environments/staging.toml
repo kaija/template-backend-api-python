@@ -1,0 +1,24 @@
+# Staging environment settings
+[default]
+debug = false
+reload = false
+log_level = "INFO"
+log_format = "json"
+
+# Staging server settings
+host = "0.0.0.0"
+port = 8000
+
+# Staging monitoring
+sentry_environment = "staging"
+sentry_traces_sample_rate = 0.5
+metrics_enabled = true
+
+# Staging features - closer to production
+feature_registration_enabled = true
+feature_email_verification = true
+feature_social_login = false
+
+# Staging performance
+workers = 2
+request_timeout = 30

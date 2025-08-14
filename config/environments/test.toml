@@ -1,0 +1,33 @@
+# Test environment configuration
+[default]
+# Override database URL for testing
+database_url = "sqlite+aiosqlite:///./test.db"
+
+# Test-specific settings
+debug = true
+log_level = "DEBUG"
+
+# Disable external services for testing
+metrics_enabled = false
+sentry_dsn = ""
+
+# Fast settings for testing
+db_pool_size = 1
+db_max_overflow = 0
+db_pool_timeout = 5
+
+# Redis for testing (use fake redis or disable)
+redis_url = "redis://localhost:6379/15"  # Use different DB for tests
+
+# JWT settings for testing
+secret_key = "test-secret-key-for-testing-only-not-secure"
+access_token_expire_minutes = 5
+refresh_token_expire_days = 1
+
+# Disable rate limiting for tests
+rate_limit_enabled = false
+
+# Test feature flags
+feature_registration_enabled = true
+feature_email_verification = false
+feature_social_login = false

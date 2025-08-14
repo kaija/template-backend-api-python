@@ -1,0 +1,49 @@
+# Docker development environment settings
+[default]
+debug = true
+reload = false  # Disable reload in Docker for stability
+log_level = "INFO"
+log_format = "json"
+
+# Docker-specific server settings
+host = "0.0.0.0"  # Required for Docker networking
+port = 8000
+
+# Docker development database (use service names)
+database_url = "postgresql+asyncpg://api_user:api_password@postgres:5432/api_db"
+
+# Docker development Redis (use service names)
+redis_url = "redis://redis:6379/0"
+
+# Docker development CORS - allow common development origins
+cors_origins = [
+    "http://localhost:3000",
+    "http://localhost:8080", 
+    "http://127.0.0.1:3000",
+    "http://host.docker.internal:3000"
+]
+
+# Docker development monitoring
+sentry_environment = "docker-development"
+sentry_traces_sample_rate = 1.0
+metrics_enabled = true
+
+# Docker development observability
+observability_log_requests = true
+observability_log_responses = true
+observability_log_request_body = false
+observability_log_response_body = false
+observability_mask_sensitive_data = true
+observability_track_performance = true
+
+# Docker development features
+feature_registration_enabled = true
+feature_email_verification = false
+
+# Docker-specific performance settings
+workers = 1
+request_timeout = 30
+shutdown_timeout = 10
+
+# Health check settings for Docker
+health_check_timeout = 10

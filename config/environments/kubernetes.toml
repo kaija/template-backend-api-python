@@ -1,0 +1,59 @@
+# Kubernetes environment settings
+[default]
+debug = false
+reload = false
+log_level = "INFO"
+log_format = "json"
+
+# Kubernetes server settings
+host = "0.0.0.0"
+port = 8000
+
+# Kubernetes monitoring
+sentry_environment = "kubernetes"
+sentry_traces_sample_rate = 0.1
+sentry_sample_rate = 0.1
+metrics_enabled = true
+
+# Kubernetes observability
+observability_log_requests = true
+observability_log_responses = false
+observability_log_request_body = false
+observability_log_response_body = false
+observability_mask_sensitive_data = true
+observability_track_performance = true
+
+# Kubernetes structured logging
+mask_sensitive_logs = true
+
+# Kubernetes features
+feature_registration_enabled = true
+feature_email_verification = true
+feature_social_login = true
+
+# Kubernetes performance - optimized for container orchestration
+workers = 4
+worker_connections = 1000
+request_timeout = 30
+max_request_size = 5242880  # 5MB
+
+# Kubernetes rate limiting
+rate_limit_requests = 100
+rate_limit_window = 60
+
+# Kubernetes database pool
+db_pool_size = 20
+db_max_overflow = 40
+db_pool_timeout = 30
+db_pool_recycle = 3600
+
+# Kubernetes health checks - optimized for orchestration
+health_check_timeout = 5
+shutdown_timeout = 30
+
+# Kubernetes-specific settings
+shutdown_wait_for_connections = true
+shutdown_force_after_timeout = true
+
+# Kubernetes security
+cors_origins = []  # Should be configured via environment variables or ConfigMap

@@ -1,0 +1,46 @@
+# Production environment settings
+[default]
+debug = false
+reload = false
+log_level = "WARNING"
+log_format = "json"
+
+# Production server settings
+host = "0.0.0.0"
+port = 8000
+
+# Production monitoring
+sentry_environment = "production"
+sentry_traces_sample_rate = 0.1
+sentry_sample_rate = 0.1
+metrics_enabled = true
+
+# Production observability - minimal logging for performance
+observability_log_requests = true
+observability_log_responses = true
+observability_log_request_body = false  # Never log request bodies in production
+observability_log_response_body = false  # Never log response bodies in production
+observability_mask_sensitive_data = true  # Always mask sensitive data in production
+observability_track_performance = true
+
+# Production structured logging
+mask_sensitive_logs = true  # Always mask sensitive data in production logs
+
+# Production features
+feature_registration_enabled = true
+feature_email_verification = true
+feature_social_login = true
+
+# Production performance
+workers = 4
+worker_connections = 1000
+request_timeout = 30
+max_request_size = 5242880  # 5MB for production
+
+# Production rate limiting - more restrictive
+rate_limit_requests = 60
+rate_limit_window = 60
+
+# Production database pool - larger for production load
+db_pool_size = 20
+db_max_overflow = 40

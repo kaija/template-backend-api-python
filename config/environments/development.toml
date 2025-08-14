@@ -1,0 +1,41 @@
+# Development environment settings
+[default]
+debug = true
+reload = true
+log_level = "DEBUG"
+log_format = "console"
+
+# Development server settings
+host = "127.0.0.1"
+port = 8000
+
+# Development database (override in .env or .secrets.toml)
+database_url = "postgresql+asyncpg://postgres:password@localhost:5432/api_dev"
+
+# Development Redis
+redis_url = "redis://localhost:6379/0"
+
+# Development CORS - allow all origins
+cors_origins = ["http://localhost:3000", "http://localhost:8080", "http://127.0.0.1:3000"]
+cors_allow_origins = ["http://localhost:3000", "http://localhost:8080", "http://127.0.0.1:3000"]
+
+# Development monitoring
+sentry_environment = "development"
+sentry_traces_sample_rate = 1.0
+sentry_sample_rate = 1.0
+metrics_enabled = true
+
+# Development observability - more verbose logging
+observability_log_requests = true
+observability_log_responses = true
+observability_log_request_body = false  # Still be careful with request bodies
+observability_log_response_body = false  # Still be careful with response bodies
+observability_mask_sensitive_data = true  # Keep masking even in dev for safety
+observability_track_performance = true
+
+# Development structured logging
+mask_sensitive_logs = false  # Allow more detailed logs in development
+
+# Development features
+feature_registration_enabled = true
+feature_email_verification = false

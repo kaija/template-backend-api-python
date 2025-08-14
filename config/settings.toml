@@ -1,0 +1,86 @@
+# Default application settings
+[default]
+app_name = "Production API Framework"
+version = "0.1.0"
+debug = false
+
+# Server settings
+host = "0.0.0.0"
+port = 8000
+
+# API settings
+api_prefix = "/api"
+version_prefix = "/v1"
+
+# Database settings
+database_url = "postgresql+asyncpg://postgres:password@localhost:5432/api_dev"
+db_pool_size = 10
+db_max_overflow = 20
+db_pool_timeout = 30
+db_pool_recycle = 3600
+
+# Redis settings
+redis_url = "redis://localhost:6379/0"
+redis_max_connections = 10
+redis_retry_on_timeout = true
+
+# JWT settings
+secret_key = "development-secret-key-change-this-in-production-environments"
+access_token_expire_minutes = 30
+refresh_token_expire_days = 7
+algorithm = "HS256"
+
+# CORS settings
+cors_origins = ["*"]
+cors_allow_origins = ["*"]
+cors_allow_credentials = true
+cors_allow_methods = ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
+cors_allow_headers = ["*"]
+
+# Logging settings
+log_level = "INFO"
+log_format = "json"
+
+# Monitoring settings
+metrics_enabled = true
+metrics_path = "/metrics"
+sentry_traces_sample_rate = 0.1
+sentry_sample_rate = 0.1
+
+# Observability settings
+observability_log_requests = true
+observability_log_responses = true
+observability_log_request_body = false
+observability_log_response_body = false
+observability_mask_sensitive_data = true
+observability_track_performance = true
+
+# Structured logging settings
+mask_sensitive_logs = true
+
+# Rate limiting
+rate_limit_enabled = true
+rate_limit_requests = 100
+rate_limit_window = 60
+
+# Health checks
+health_check_path = "/healthz"
+readiness_check_path = "/readyz"
+health_check_timeout = 5
+
+# Performance settings
+request_timeout = 30
+max_request_size = 10485760  # 10MB
+workers = 1
+worker_class = "uvicorn.workers.UvicornWorker"
+worker_connections = 1000
+
+# Shutdown settings
+shutdown_timeout = 30
+shutdown_wait_for_connections = true
+shutdown_force_after_timeout = true
+
+# Feature flags
+feature_registration_enabled = true
+feature_email_verification = false
+feature_social_login = false

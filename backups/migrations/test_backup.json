@@ -1,0 +1,9 @@
+{
+  "timestamp": "2025-08-13T21:12:31.182775",
+  "database_url": "hidden",
+  "tables": {
+    "users": [],
+    "api_keys": [],
+    "sessions": []
+  }
+}

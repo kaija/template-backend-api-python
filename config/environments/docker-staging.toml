@@ -1,0 +1,50 @@
+# Docker staging environment settings
+[default]
+debug = false
+reload = false
+log_level = "INFO"
+log_format = "json"
+
+# Docker staging server settings
+host = "0.0.0.0"
+port = 8000
+
+# Docker staging monitoring
+sentry_environment = "docker-staging"
+sentry_traces_sample_rate = 0.5
+sentry_sample_rate = 0.5
+metrics_enabled = true
+
+# Docker staging observability - production-like but more verbose
+observability_log_requests = true
+observability_log_responses = true
+observability_log_request_body = false
+observability_log_response_body = false
+observability_mask_sensitive_data = true
+observability_track_performance = true
+
+# Docker staging structured logging
+mask_sensitive_logs = true
+
+# Docker staging features - closer to production
+feature_registration_enabled = true
+feature_email_verification = true
+feature_social_login = false
+
+# Docker staging performance
+workers = 2
+worker_connections = 500
+request_timeout = 30
+max_request_size = 8388608  # 8MB
+
+# Docker staging rate limiting
+rate_limit_requests = 80
+rate_limit_window = 60
+
+# Docker staging database pool
+db_pool_size = 15
+db_max_overflow = 30
+
+# Docker staging health checks
+health_check_timeout = 10
+shutdown_timeout = 20
