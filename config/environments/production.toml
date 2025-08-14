@@ -44,3 +44,9 @@ rate_limit_window = 60
 # Production database pool - larger for production load
 db_pool_size = 20
 db_max_overflow = 40
+
+# Production documentation settings - restricted access
+docs_enabled_in_production = false
+docs_require_auth = true
+docs_api_key = ""  # Set via environment variable or secrets
+swagger_oauth2_enabled = false

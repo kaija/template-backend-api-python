@@ -21,16 +21,16 @@ from .rbac import (
 __all__ = [
     # RBAC classes and enums
     "Permission",
-    "Role", 
+    "Role",
     "RBACManager",
     "rbac_manager",
-    
+
     # Decorators
     "require_permission",
-    "require_any_permission", 
+    "require_any_permission",
     "require_all_permissions",
     "require_role",
-    
+
     # Utility functions
     "get_current_user",
     "get_user_roles",

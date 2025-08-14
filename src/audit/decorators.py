@@ -35,7 +35,7 @@ def audit_event(
 ) -> Callable[[F], F]:
     """
     Decorator for automatic audit logging of function calls.
-    
+
     Args:
         event_type: Type of audit event
         severity: Event severity level
@@ -45,7 +45,7 @@ def audit_event(
         log_args: Whether to log function arguments
         log_result: Whether to log function result
         sensitive_args: List of argument names to redact
-        
+
     Example:
         @audit_event(
             event_type=AuditEventType.USER_CREATED,
@@ -67,7 +67,7 @@ def audit_event(
                 message_template, resource_type, action,
                 log_args, log_result, sensitive_args
             )
-        
+
         @functools.wraps(func)
         def sync_wrapper(*args, **kwargs):
             return _execute_with_audit_sync(
@@ -75,13 +75,13 @@ def audit_event(
                 message_template, resource_type, action,
                 log_args, log_result, sensitive_args
             )
-        
+
         # Return appropriate wrapper based on function type
         if inspect.iscoroutinefunction(func):
             return async_wrapper
         else:
             return sync_wrapper
-    
+
     return decorator
 
 
@@ -100,46 +100,46 @@ def _execute_with_audit_sync(
 ) -> Any:
     """Execute synchronous function with audit logging."""
     start_time = time.time()
-    
+
     # Get function signature for argument mapping
     sig = inspect.signature(func)
     bound_args = sig.bind(*args, **kwargs)
     bound_args.apply_defaults()
-    
+
     # Create audit message
     message = _create_audit_message(
         func, message_template, bound_args.arguments
     )
-    
+
     # Prepare metadata
     metadata = {
         "function": func.__name__,
         "module": func.__module__,
         "execution_time": None,  # Will be set after execution
     }
-    
+
     # Add arguments to metadata if requested
     if log_args:
         sanitized_args = _sanitize_arguments(
             bound_args.arguments, sensitive_args or []
         )
         metadata["arguments"] = sanitized_args
-    
+
     # Extract resource ID if available
     resource_id = _extract_resource_id(bound_args.arguments)
-    
+
     try:
         # Execute function
         result = func(*args, **kwargs)
-        
+
         # Calculate execution time
         execution_time = time.time() - start_time
         metadata["execution_time"] = round(execution_time * 1000, 2)  # ms
-        
+
         # Add result to metadata if requested
         if log_result:
             metadata["result"] = _sanitize_result(result)
-        
+
         # Create and log audit event
         event = AuditEvent(
             event_type=event_type,
@@ -153,11 +153,11 @@ def _execute_with_audit_sync(
             action=action,
             metadata=metadata,
         )
-        
+
         audit_logger.log_event(event)
-        
+
         return result
-        
+
     except Exception as e:
         # Log error event
         execution_time = time.time() - start_time
@@ -166,7 +166,7 @@ def _execute_with_audit_sync(
             "type": type(e).__name__,
             "message": str(e),
         }
-        
+
         error_event = AuditEvent(
             event_type=AuditEventType.ERROR_OCCURRED,
             severity=AuditSeverity.HIGH,
@@ -180,9 +180,9 @@ def _execute_with_audit_sync(
             metadata=metadata,
             tags=["error", "function_execution"],
         )
-        
+
         audit_logger.log_event(error_event)
-        
+
         # Re-raise the exception
         raise
 
@@ -202,46 +202,46 @@ async def _execute_with_audit_async(
 ) -> Any:
     """Execute asynchronous function with audit logging."""
     start_time = time.time()
-    
+
     # Get function signature for argument mapping
     sig = inspect.signature(func)
     bound_args = sig.bind(*args, **kwargs)
     bound_args.apply_defaults()
-    
+
     # Create audit message
     message = _create_audit_message(
         func, message_template, bound_args.arguments
     )
-    
+
     # Prepare metadata
     metadata = {
         "function": func.__name__,
         "module": func.__module__,
         "execution_time": None,  # Will be set after execution
     }
-    
+
     # Add arguments to metadata if requested
     if log_args:
         sanitized_args = _sanitize_arguments(
             bound_args.arguments, sensitive_args or []
         )
         metadata["arguments"] = sanitized_args
-    
+
     # Extract resource ID if available
     resource_id = _extract_resource_id(bound_args.arguments)
-    
+
     try:
         # Execute function
         result = await func(*args, **kwargs)
-        
+
         # Calculate execution time
         execution_time = time.time() - start_time
         metadata["execution_time"] = round(execution_time * 1000, 2)  # ms
-        
+
         # Add result to metadata if requested
         if log_result:
             metadata["result"] = _sanitize_result(result)
-        
+
         # Create and log audit event
         event = AuditEvent(
             event_type=event_type,
@@ -255,11 +255,11 @@ async def _execute_with_audit_async(
             action=action,
             metadata=metadata,
         )
-        
+
         audit_logger.log_event(event)
-        
+
         return result
-        
+
     except Exception as e:
         # Log error event
         execution_time = time.time() - start_time
@@ -268,7 +268,7 @@ async def _execute_with_audit_async(
             "type": type(e).__name__,
             "message": str(e),
         }
-        
+
         error_event = AuditEvent(
             event_type=AuditEventType.ERROR_OCCURRED,
             severity=AuditSeverity.HIGH,
@@ -282,9 +282,9 @@ async def _execute_with_audit_async(
             metadata=metadata,
             tags=["error", "function_execution"],
         )
-        
+
         audit_logger.log_event(error_event)
-        
+
         # Re-raise the exception
         raise
 
@@ -301,7 +301,7 @@ def _create_audit_message(
         except (KeyError, ValueError):
             # Fall back to default message if template formatting fails
             pass
-    
+
     # Default message
     return f"Function {func.__name__} executed"
 
@@ -312,7 +312,7 @@ def _sanitize_arguments(
 ) -> Dict[str, Any]:
     """Sanitize function arguments for logging."""
     sanitized = {}
-    
+
     for key, value in arguments.items():
         if key in sensitive_args:
             sanitized[key] = "[REDACTED]"
@@ -324,7 +324,7 @@ def _sanitize_arguments(
             sanitized[key] = f"<dict with {len(value)} keys>"
         else:
             sanitized[key] = f"<{type(value).__name__}>"
-    
+
     return sanitized
 
 
@@ -344,13 +344,13 @@ def _extract_resource_id(arguments: Dict[str, Any]) -> Optional[str]:
     """Extract resource ID from function arguments."""
     # Common parameter names that might contain resource IDs
     id_params = ['id', 'user_id', 'resource_id', 'entity_id', 'record_id']
-    
+
     for param in id_params:
         if param in arguments:
             value = arguments[param]
             if isinstance(value, (str, int)):
                 return str(value)
-    
+
     return None
 
 
@@ -472,11 +472,11 @@ def audit_security_event(
 class AuditScope:
     """
     Context manager for grouping related audit events.
-    
+
     Allows grouping multiple audit events under a single
     operation or transaction scope.
     """
-    
+
     def __init__(
         self,
         operation_name: str,
@@ -485,7 +485,7 @@ class AuditScope:
     ):
         """
         Initialize audit scope.
-        
+
         Args:
             operation_name: Name of the operation
             operation_type: Type of operation
@@ -496,11 +496,11 @@ class AuditScope:
         self.user_id = user_id
         self.start_time = None
         self.events = []
-    
+
     def __enter__(self):
         """Enter audit scope."""
         self.start_time = time.time()
-        
+
         # Log operation start
         start_event = AuditEvent(
             event_type=AuditEventType.ADMIN_ACTION,
@@ -515,14 +515,14 @@ class AuditScope:
                 "operation_type": self.operation_type,
             },
         )
-        
+
         audit_logger.log_event(start_event)
         return self
-    
+
     def __exit__(self, exc_type, exc_val, exc_tb):
         """Exit audit scope."""
         duration = time.time() - self.start_time if self.start_time else 0
-        
+
         # Determine operation result
         if exc_type is None:
             result = "success"
@@ -532,7 +532,7 @@ class AuditScope:
             result = "failure"
             severity = AuditSeverity.HIGH
             message = f"Operation {self.operation_name} failed: {str(exc_val)}"
-        
+
         # Log operation end
         end_event = AuditEvent(
             event_type=AuditEventType.ADMIN_ACTION,
@@ -550,9 +550,9 @@ class AuditScope:
                 "error": str(exc_val) if exc_val else None,
             },
         )
-        
+
         audit_logger.log_event(end_event)
-    
+
     def add_event(self, event: AuditEvent) -> None:
         """Add event to the current scope."""
         self.events.append(event)

@@ -22,11 +22,11 @@ logger = logging.getLogger(__name__)
 class APIException(HTTPException):
     """
     Base API exception class.
-    
+
     Provides a standardized way to raise HTTP exceptions with
     detailed error information.
     """
-    
+
     def __init__(
         self,
         status_code: int,
@@ -37,7 +37,7 @@ class APIException(HTTPException):
     ):
         """
         Initialize API exception.
-        
+
         Args:
             status_code: HTTP status code
             message: Human-readable error message
@@ -48,25 +48,25 @@ class APIException(HTTPException):
         self.message = message
         self.error_code = error_code
         self.details = details or []
-        
+
         super().__init__(
             status_code=status_code,
             detail=self._create_detail(),
             headers=headers
         )
-    
+
     def _create_detail(self) -> Dict[str, Any]:
         """Create detailed error information."""
         return {
             "message": self.message,
             "error_code": self.error_code,
-            "details": [detail.model_dump() for detail in self.details] if self.details else None
+            "details": [detail.model_dump(mode='json') for detail in self.details] if self.details else None
         }
 
 
 class ValidationException(APIException):
     """Exception for validation errors."""
-    
+
     def __init__(
         self,
         message: str = "Validation failed",
@@ -82,7 +82,7 @@ class ValidationException(APIException):
 
 class AuthenticationException(APIException):
     """Exception for authentication errors."""
-    
+
     def __init__(
         self,
         message: str = "Authentication failed",
@@ -98,7 +98,7 @@ class AuthenticationException(APIException):
 
 class AuthorizationException(APIException):
     """Exception for authorization errors."""
-    
+
     def __init__(
         self,
         message: str = "Access denied",
@@ -113,7 +113,7 @@ class AuthorizationException(APIException):
 
 class NotFoundException(APIException):
     """Exception for resource not found errors."""
-    
+
     def __init__(
         self,
         message: str = "Resource not found",
@@ -128,7 +128,7 @@ class NotFoundException(APIException):
 
 class ConflictException(APIException):
     """Exception for resource conflict errors."""
-    
+
     def __init__(
         self,
         message: str = "Resource conflict",
@@ -143,7 +143,7 @@ class ConflictException(APIException):
 
 class RateLimitException(APIException):
     """Exception for rate limiting errors."""
-    
+
     def __init__(
         self,
         message: str = "Rate limit exceeded",
@@ -161,7 +161,7 @@ class RateLimitException(APIException):
 
 class InternalServerException(APIException):
     """Exception for internal server errors."""
-    
+
     def __init__(
         self,
         message: str = "Internal server error",
@@ -176,7 +176,7 @@ class InternalServerException(APIException):
 
 class BadRequestException(APIException):
     """Exception for bad request errors."""
-    
+
     def __init__(
         self,
         message: str = "Bad request",
@@ -193,7 +193,7 @@ class BadRequestException(APIException):
 
 class UnprocessableEntityException(APIException):
     """Exception for unprocessable entity errors."""
-    
+
     def __init__(
         self,
         message: str = "Unprocessable entity",
@@ -210,7 +210,7 @@ class UnprocessableEntityException(APIException):
 
 class ServiceUnavailableException(APIException):
     """Exception for service unavailable errors."""
-    
+
     def __init__(
         self,
         message: str = "Service temporarily unavailable",
@@ -228,7 +228,7 @@ class ServiceUnavailableException(APIException):
 
 class DatabaseException(APIException):
     """Exception for database-related errors."""
-    
+
     def __init__(
         self,
         message: str = "Database operation failed",
@@ -243,7 +243,7 @@ class DatabaseException(APIException):
 
 class ExternalServiceException(APIException):
     """Exception for external service errors."""
-    
+
     def __init__(
         self,
         message: str = "External service error",
@@ -252,7 +252,7 @@ class ExternalServiceException(APIException):
     ):
         if service_name:
             message = f"{service_name}: {message}"
-        
+
         super().__init__(
             status_code=status.HTTP_502_BAD_GATEWAY,
             message=message,
@@ -263,73 +263,73 @@ class ExternalServiceException(APIException):
 def convert_pydantic_error_to_details(error: ValidationError) -> List[ErrorDetail]:
     """
     Convert Pydantic validation error to ErrorDetail list.
-    
+
     Args:
         error: Pydantic validation error
-        
+
     Returns:
         List of ErrorDetail objects
     """
     details = []
-    
+
     for err in error.errors():
         field_path = ".".join(str(loc) for loc in err["loc"])
-        
+
         detail = ErrorDetail(
             field=field_path,
             message=err["msg"],
             code=err["type"]
         )
         details.append(detail)
-    
+
     return details
 
 
 def convert_fastapi_validation_error_to_details(error: RequestValidationError) -> List[ErrorDetail]:
     """
     Convert FastAPI validation error to ErrorDetail list.
-    
+
     Args:
         error: FastAPI request validation error
-        
+
     Returns:
         List of ErrorDetail objects
     """
     details = []
-    
+
     for err in error.errors():
         # Determine field location
         field_parts = []
         for loc in err["loc"]:
             if loc not in ("body", "query", "path", "header"):
                 field_parts.append(str(loc))
-        
+
         field_path = ".".join(field_parts) if field_parts else "unknown"
-        
+
         detail = ErrorDetail(
             field=field_path,
             message=err["msg"],
             code=err["type"]
         )
         details.append(detail)
-    
+
     return details
 
 
 async def validation_exception_handler(request: Request, exc: RequestValidationError) -> JSONResponse:
     """
     Handle FastAPI validation errors.
-    
+
     Args:
         request: FastAPI request object
         exc: Request validation error
-        
+
     Returns:
         JSON response with error details
     """
     # Get correlation ID from request state
     correlation_id = getattr(request.state, "correlation_id", None)
-    
+
     # Log validation error
     logger.warning(
         f"Validation error in {request.method} {request.url.path}",
@@ -341,22 +341,22 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
             "correlation_id": correlation_id,
         }
     )
-    
+
     details = convert_fastapi_validation_error_to_details(exc)
-    
+
     error_response = ErrorResponse(
         message="Request validation failed",
         error_code="VALIDATION_ERROR",
         details=details
     )
-    
+
     # Add correlation ID to response
-    response_data = error_response.model_dump()
+    response_data = error_response.model_dump(mode='json')
     if correlation_id:
         response_data["correlation_id"] = correlation_id
-    
+
     headers = {"X-Correlation-ID": correlation_id} if correlation_id else None
-    
+
     return JSONResponse(
         status_code=status.HTTP_400_BAD_REQUEST,
         content=response_data,
@@ -367,17 +367,17 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
 async def pydantic_validation_exception_handler(request: Request, exc: ValidationError) -> JSONResponse:
     """
     Handle Pydantic validation errors.
-    
+
     Args:
         request: FastAPI request object
         exc: Pydantic validation error
-        
+
     Returns:
         JSON response with error details
     """
     # Get correlation ID from request state
     correlation_id = getattr(request.state, "correlation_id", None)
-    
+
     # Log validation error
     logger.warning(
         f"Pydantic validation error in {request.method} {request.url.path}",
@@ -389,22 +389,22 @@ async def pydantic_validation_exception_handler(request: Request, exc: Validatio
             "correlation_id": correlation_id,
         }
     )
-    
+
     details = convert_pydantic_error_to_details(exc)
-    
+
     error_response = ErrorResponse(
         message="Data validation failed",
         error_code="VALIDATION_ERROR",
         details=details
     )
-    
+
     # Add correlation ID to response
-    response_data = error_response.model_dump()
+    response_data = error_response.model_dump(mode='json')
     if correlation_id:
         response_data["correlation_id"] = correlation_id
-    
+
     headers = {"X-Correlation-ID": correlation_id} if correlation_id else None
-    
+
     return JSONResponse(
         status_code=status.HTTP_400_BAD_REQUEST,
         content=response_data,
@@ -415,17 +415,17 @@ async def pydantic_validation_exception_handler(request: Request, exc: Validatio
 async def api_exception_handler(request: Request, exc: APIException) -> JSONResponse:
     """
     Handle custom API exceptions.
-    
+
     Args:
         request: FastAPI request object
         exc: API exception
-        
+
     Returns:
         JSON response with error details
     """
     # Get correlation ID from request state
     correlation_id = getattr(request.state, "correlation_id", None)
-    
+
     # Log API exception based on severity
     log_level = logging.ERROR if exc.status_code >= 500 else logging.WARNING
     logger.log(
@@ -441,23 +441,23 @@ async def api_exception_handler(request: Request, exc: APIException) -> JSONResp
             "correlation_id": correlation_id,
         }
     )
-    
+
     error_response = ErrorResponse(
         message=exc.message,
         error_code=exc.error_code,
         details=exc.details
     )
-    
+
     # Add correlation ID to response
-    response_data = error_response.model_dump()
+    response_data = error_response.model_dump(mode='json')
     if correlation_id:
         response_data["correlation_id"] = correlation_id
-    
+
     # Merge correlation ID header with existing headers
     headers = exc.headers or {}
     if correlation_id:
         headers["X-Correlation-ID"] = correlation_id
-    
+
     return JSONResponse(
         status_code=exc.status_code,
         content=response_data,
@@ -468,17 +468,17 @@ async def api_exception_handler(request: Request, exc: APIException) -> JSONResp
 async def http_exception_handler(request: Request, exc: Union[HTTPException, StarletteHTTPException]) -> JSONResponse:
     """
     Handle HTTP exceptions.
-    
+
     Args:
         request: FastAPI request object
         exc: HTTP exception
-        
+
     Returns:
         JSON response with error details
     """
     # Get correlation ID from request state
     correlation_id = getattr(request.state, "correlation_id", None)
-    
+
     # Extract message from detail
     if isinstance(exc.detail, dict):
         message = exc.detail.get("message", "HTTP error occurred")
@@ -492,7 +492,7 @@ async def http_exception_handler(request: Request, exc: Union[HTTPException, Sta
         message = "HTTP error occurred"
         error_code = None
         details = None
-    
+
     # Log HTTP exception based on severity
     log_level = logging.ERROR if exc.status_code >= 500 else logging.WARNING
     logger.log(
@@ -507,23 +507,23 @@ async def http_exception_handler(request: Request, exc: Union[HTTPException, Sta
             "correlation_id": correlation_id,
         }
     )
-    
+
     error_response = ErrorResponse(
         message=message,
         error_code=error_code,
         details=details
     )
-    
+
     # Add correlation ID to response
-    response_data = error_response.model_dump()
+    response_data = error_response.model_dump(mode='json')
     if correlation_id:
         response_data["correlation_id"] = correlation_id
-    
+
     # Merge correlation ID header with existing headers
     headers = getattr(exc, 'headers', None) or {}
     if correlation_id:
         headers["X-Correlation-ID"] = correlation_id
-    
+
     return JSONResponse(
         status_code=exc.status_code,
         content=response_data,
@@ -534,17 +534,17 @@ async def http_exception_handler(request: Request, exc: Union[HTTPException, Sta
 async def generic_exception_handler(request: Request, exc: Exception) -> JSONResponse:
     """
     Handle generic exceptions.
-    
+
     Args:
         request: FastAPI request object
         exc: Generic exception
-        
+
     Returns:
         JSON response with error details
     """
     # Get correlation ID from request state
     correlation_id = getattr(request.state, "correlation_id", None)
-    
+
     # Log the exception with full context
     logger.exception(
         f"Unhandled exception in {request.method} {request.url.path}",
@@ -557,7 +557,7 @@ async def generic_exception_handler(request: Request, exc: Exception) -> JSONRes
             "correlation_id": correlation_id,
         }
     )
-    
+
     # Determine error message based on environment
     if is_development():
         # In development, show actual error message
@@ -573,20 +573,20 @@ async def generic_exception_handler(request: Request, exc: Exception) -> JSONRes
         # In production, use generic message
         message = "An internal server error occurred"
         details = None
-    
+
     error_response = ErrorResponse(
         message=message,
         error_code="INTERNAL_SERVER_ERROR",
         details=details
     )
-    
+
     # Add correlation ID to response
-    response_data = error_response.model_dump()
+    response_data = error_response.model_dump(mode='json')
     if correlation_id:
         response_data["correlation_id"] = correlation_id
-    
+
     headers = {"X-Correlation-ID": correlation_id} if correlation_id else None
-    
+
     return JSONResponse(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         content=response_data,
@@ -597,7 +597,7 @@ async def generic_exception_handler(request: Request, exc: Exception) -> JSONRes
 def setup_exception_handlers(app):
     """
     Set up exception handlers for the FastAPI application.
-    
+
     Args:
         app: FastAPI application instance
     """

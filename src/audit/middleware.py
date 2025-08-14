@@ -27,14 +27,14 @@ from .audit_logger import (
 class AuditMiddleware(BaseHTTPMiddleware):
     """
     Middleware for audit logging and request tracking.
-    
+
     Automatically:
     - Sets correlation IDs for request tracking
     - Logs request/response information
     - Tracks authentication events
     - Detects suspicious patterns
     """
-    
+
     def __init__(
         self,
         app: ASGIApp,
@@ -46,7 +46,7 @@ class AuditMiddleware(BaseHTTPMiddleware):
     ):
         """
         Initialize audit middleware.
-        
+
         Args:
             app: ASGI application
             log_requests: Whether to log incoming requests
@@ -59,7 +59,7 @@ class AuditMiddleware(BaseHTTPMiddleware):
         self.log_requests = log_requests
         self.log_responses = log_responses
         self.log_errors = log_errors
-        
+
         # Default sensitive headers to exclude
         self.sensitive_headers = sensitive_headers or {
             'authorization',
@@ -68,7 +68,7 @@ class AuditMiddleware(BaseHTTPMiddleware):
             'x-auth-token',
             'x-access-token',
         }
-        
+
         # Paths to exclude from audit logging
         self.excluded_paths = excluded_paths or {
             '/health',
@@ -77,56 +77,56 @@ class AuditMiddleware(BaseHTTPMiddleware):
             '/metrics',
             '/favicon.ico',
         }
-    
+
     async def dispatch(self, request: Request, call_next: Callable) -> Response:
         """Process request and response with audit logging."""
         start_time = time.time()
-        
+
         # Skip audit logging for excluded paths
         if request.url.path in self.excluded_paths:
             return await call_next(request)
-        
+
         # Set up request context
         correlation_id = self._get_or_create_correlation_id(request)
         request_id = str(uuid.uuid4())
-        
+
         set_correlation_id(correlation_id)
         set_request_context(request_id)
-        
+
         # Extract user context if available
         user_id = self._extract_user_id(request)
         if user_id:
             set_user_context(user_id)
-        
+
         # Log incoming request
         if self.log_requests:
             self._log_request(request, correlation_id, request_id)
-        
+
         # Process request and handle errors
         try:
             response = await call_next(request)
-            
+
             # Log outgoing response
             if self.log_responses:
                 self._log_response(
-                    request, response, correlation_id, 
+                    request, response, correlation_id,
                     request_id, time.time() - start_time
                 )
-            
+
             # Add correlation ID to response headers
             response.headers["X-Correlation-ID"] = correlation_id
             response.headers["X-Request-ID"] = request_id
-            
+
             return response
-            
+
         except Exception as e:
             # Log error
             if self.log_errors:
                 self._log_error(request, e, correlation_id, request_id)
-            
+
             # Re-raise the exception
             raise
-    
+
     def _get_or_create_correlation_id(self, request: Request) -> str:
         """Get correlation ID from request headers or create new one."""
         # Check for existing correlation ID in headers
@@ -135,35 +135,35 @@ class AuditMiddleware(BaseHTTPMiddleware):
             correlation_id = request.headers.get('x-request-id')
         if not correlation_id:
             correlation_id = str(uuid.uuid4())
-        
+
         return correlation_id
-    
+
     def _extract_user_id(self, request: Request) -> Optional[str]:
         """Extract user ID from request context."""
         # Try to get user from request state (set by auth middleware)
         if hasattr(request.state, 'user') and request.state.user:
             return getattr(request.state.user, 'id', None)
-        
+
         # Try to get user ID from custom header
         return request.headers.get('x-user-id')
-    
+
     def _get_client_ip(self, request: Request) -> str:
         """Get client IP address from request."""
         # Check for forwarded headers first
         forwarded_for = request.headers.get('x-forwarded-for')
         if forwarded_for:
             return forwarded_for.split(',')[0].strip()
-        
+
         real_ip = request.headers.get('x-real-ip')
         if real_ip:
             return real_ip
-        
+
         # Fall back to direct client IP
         if request.client:
             return request.client.host
-        
+
         return "unknown"
-    
+
     def _sanitize_headers(self, headers: dict) -> dict:
         """Remove sensitive headers from logging."""
         sanitized = {}
@@ -173,17 +173,17 @@ class AuditMiddleware(BaseHTTPMiddleware):
             else:
                 sanitized[key] = value
         return sanitized
-    
+
     def _log_request(
-        self, 
-        request: Request, 
-        correlation_id: str, 
+        self,
+        request: Request,
+        correlation_id: str,
         request_id: str
     ) -> None:
         """Log incoming request details."""
         client_ip = self._get_client_ip(request)
         user_agent = request.headers.get('user-agent', 'unknown')
-        
+
         # Create request audit event
         event = AuditEvent(
             event_type=AuditEventType.SYSTEM_STARTUP,  # Using as generic request event
@@ -202,9 +202,9 @@ class AuditMiddleware(BaseHTTPMiddleware):
                 "headers": self._sanitize_headers(dict(request.headers)),
             }
         )
-        
+
         audit_logger.log_event(event)
-    
+
     def _log_response(
         self,
         request: Request,
@@ -215,7 +215,7 @@ class AuditMiddleware(BaseHTTPMiddleware):
     ) -> None:
         """Log outgoing response details."""
         client_ip = self._get_client_ip(request)
-        
+
         # Determine severity based on status code
         if response.status_code >= 500:
             severity = AuditSeverity.HIGH
@@ -223,7 +223,7 @@ class AuditMiddleware(BaseHTTPMiddleware):
             severity = AuditSeverity.MEDIUM
         else:
             severity = AuditSeverity.LOW
-        
+
         # Create response audit event
         event = AuditEvent(
             event_type=AuditEventType.SYSTEM_STARTUP,  # Using as generic response event
@@ -242,12 +242,12 @@ class AuditMiddleware(BaseHTTPMiddleware):
                 "response_headers": self._sanitize_headers(dict(response.headers)),
             }
         )
-        
+
         audit_logger.log_event(event)
-        
+
         # Log suspicious patterns
         self._detect_suspicious_patterns(request, response, client_ip, duration)
-    
+
     def _log_error(
         self,
         request: Request,
@@ -257,7 +257,7 @@ class AuditMiddleware(BaseHTTPMiddleware):
     ) -> None:
         """Log request processing errors."""
         client_ip = self._get_client_ip(request)
-        
+
         # Create error audit event
         event = AuditEvent(
             event_type=AuditEventType.ERROR_OCCURRED,
@@ -276,9 +276,9 @@ class AuditMiddleware(BaseHTTPMiddleware):
             },
             tags=["error", "request_processing"]
         )
-        
+
         audit_logger.log_event(event)
-    
+
     def _detect_suspicious_patterns(
         self,
         request: Request,
@@ -289,49 +289,49 @@ class AuditMiddleware(BaseHTTPMiddleware):
         """Detect and log suspicious request patterns."""
         suspicious_indicators = []
         risk_score = 0
-        
+
         # Check for multiple failed authentication attempts
         if response.status_code == 401:
             suspicious_indicators.append("authentication_failure")
             risk_score += 30
-        
+
         # Check for forbidden access attempts
         if response.status_code == 403:
             suspicious_indicators.append("forbidden_access")
             risk_score += 40
-        
+
         # Check for suspicious paths
         suspicious_paths = [
             '/admin', '/.env', '/config', '/backup',
             '/wp-admin', '/phpmyadmin', '/mysql',
             '/../', '/etc/passwd', '/proc/version'
         ]
-        
+
         if any(path in request.url.path.lower() for path in suspicious_paths):
             suspicious_indicators.append("suspicious_path")
             risk_score += 50
-        
+
         # Check for suspicious user agents
         user_agent = request.headers.get('user-agent', '').lower()
         suspicious_agents = [
             'sqlmap', 'nikto', 'nmap', 'masscan',
             'burp', 'owasp', 'scanner', 'bot'
         ]
-        
+
         if any(agent in user_agent for agent in suspicious_agents):
             suspicious_indicators.append("suspicious_user_agent")
             risk_score += 60
-        
+
         # Check for unusually long request duration (potential DoS)
         if duration > 10.0:  # 10 seconds
             suspicious_indicators.append("slow_request")
             risk_score += 20
-        
+
         # Check for unusual request methods
         if request.method not in ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'HEAD', 'OPTIONS']:
             suspicious_indicators.append("unusual_method")
             risk_score += 30
-        
+
         # Log suspicious activity if risk score is high enough
         if risk_score >= 50:
             audit_logger.log_suspicious_activity(
@@ -352,17 +352,17 @@ class AuditMiddleware(BaseHTTPMiddleware):
 class SecurityEventDetector:
     """
     Advanced security event detection and alerting.
-    
+
     Analyzes audit logs and request patterns to detect
     potential security threats and anomalies.
     """
-    
+
     def __init__(self):
         """Initialize security event detector."""
         self.failed_login_attempts = {}  # IP -> count
         self.request_counts = {}  # IP -> count
         self.suspicious_ips = set()
-    
+
     def analyze_login_attempt(
         self,
         ip_address: str,
@@ -375,19 +375,19 @@ class SecurityEventDetector:
             # Track failed attempts per IP
             if ip_address not in self.failed_login_attempts:
                 self.failed_login_attempts[ip_address] = []
-            
+
             self.failed_login_attempts[ip_address].append({
                 'username': username,
                 'timestamp': timestamp,
             })
-            
+
             # Clean old attempts (older than 1 hour)
             cutoff_time = timestamp - 3600
             self.failed_login_attempts[ip_address] = [
                 attempt for attempt in self.failed_login_attempts[ip_address]
                 if attempt['timestamp'] > cutoff_time
             ]
-            
+
             # Check for brute force pattern
             recent_failures = len(self.failed_login_attempts[ip_address])
             if recent_failures >= 5:  # 5 failures in 1 hour
@@ -396,7 +396,7 @@ class SecurityEventDetector:
             # Clear failed attempts on successful login
             if ip_address in self.failed_login_attempts:
                 del self.failed_login_attempts[ip_address]
-    
+
     def _log_brute_force_attempt(
         self,
         ip_address: str,
@@ -415,7 +415,7 @@ class SecurityEventDetector:
                 "detection_type": "brute_force_login",
             }
         )
-        
+
         # Add IP to suspicious list
         self.suspicious_ips.add(ip_address)
 

@@ -71,7 +71,7 @@ MOCK_USERS = {
         "is_active": True,
     },
     "admin": {
-        "user_id": "admin_1", 
+        "user_id": "admin_1",
         "username": "admin",
         "email": "admin@example.com",
         "full_name": "Admin User",
@@ -86,21 +86,21 @@ MOCK_USERS = {
 def authenticate_user(username: str, password: str) -> Dict[str, Any] | None:
     """
     Authenticate user with username and password.
-    
+
     Args:
         username: Username
         password: Plain text password
-        
+
     Returns:
         User information if authenticated, None otherwise
     """
     user = MOCK_USERS.get(username)
     if not user:
         return None
-    
+
     if not verify_password(password, user["hashed_password"]):
         return None
-    
+
     return user
 
 
@@ -110,13 +110,13 @@ async def login_for_access_token(
 ) -> TokenResponse:
     """
     Login endpoint to get access and refresh tokens.
-    
+
     Args:
         form_data: OAuth2 password form data
-        
+
     Returns:
         Access and refresh tokens
-        
+
     Raises:
         HTTPException: If authentication fails
     """
@@ -135,7 +135,7 @@ async def login_for_access_token(
             detail="Incorrect username or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    
+
     if not user.get("is_active"):
         # Log failed authentication for inactive user
         log_authentication_event(
@@ -150,7 +150,7 @@ async def login_for_access_token(
             detail="Inactive user",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    
+
     # Create token data
     token_data = {
         "sub": user["user_id"],
@@ -159,11 +159,11 @@ async def login_for_access_token(
         "roles": user["roles"],
         "permissions": user["permissions"],
     }
-    
+
     # Create tokens
     access_token = jwt_backend.create_access_token(data=token_data)
     refresh_token = jwt_backend.create_refresh_token(data=token_data)
-    
+
     # Log successful authentication
     log_authentication_event(
         event_type=AuditEventType.LOGIN_SUCCESS,
@@ -176,7 +176,7 @@ async def login_for_access_token(
             "roles": user["roles"]
         }
     )
-    
+
     return TokenResponse(
         access_token=access_token,
         refresh_token=refresh_token,
@@ -189,13 +189,13 @@ async def login_for_access_token(
 async def refresh_access_token(request: Request) -> TokenResponse:
     """
     Refresh access token using refresh token.
-    
+
     Args:
         request: FastAPI request object
-        
+
     Returns:
         New access and refresh tokens
-        
+
     Raises:
         HTTPException: If refresh token is invalid
     """
@@ -207,7 +207,7 @@ async def refresh_access_token(request: Request) -> TokenResponse:
             detail="Invalid refresh token",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    
+
     # Check if token is a refresh token
     if user.get("token_type") != "refresh":
         raise HTTPException(
@@ -215,7 +215,7 @@ async def refresh_access_token(request: Request) -> TokenResponse:
             detail="Invalid token type",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    
+
     # Get user data from mock database
     username = user.get("username")
     user_data = MOCK_USERS.get(username)
@@ -225,7 +225,7 @@ async def refresh_access_token(request: Request) -> TokenResponse:
             detail="User not found or inactive",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    
+
     # Create new token data
     token_data = {
         "sub": user_data["user_id"],
@@ -234,11 +234,11 @@ async def refresh_access_token(request: Request) -> TokenResponse:
         "roles": user_data["roles"],
         "permissions": user_data["permissions"],
     }
-    
+
     # Create new tokens
     access_token = jwt_backend.create_access_token(data=token_data)
     refresh_token = jwt_backend.create_refresh_token(data=token_data)
-    
+
     # Log token refresh
     log_authentication_event(
         event_type=AuditEventType.TOKEN_REFRESH,
@@ -247,7 +247,7 @@ async def refresh_access_token(request: Request) -> TokenResponse:
         outcome="success",
         message="Access token refreshed successfully"
     )
-    
+
     return TokenResponse(
         access_token=access_token,
         refresh_token=refresh_token,
@@ -260,13 +260,13 @@ async def refresh_access_token(request: Request) -> TokenResponse:
 async def register_user(user_data: UserRegistration) -> SuccessResponse:
     """
     Register a new user.
-    
+
     Args:
         user_data: User registration data
-        
+
     Returns:
         Success response
-        
+
     Raises:
         HTTPException: If username already exists
     """
@@ -276,7 +276,7 @@ async def register_user(user_data: UserRegistration) -> SuccessResponse:
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Username already registered"
         )
-    
+
     # Create new user
     new_user = {
         "user_id": f"user_{len(MOCK_USERS) + 1}",
@@ -288,10 +288,10 @@ async def register_user(user_data: UserRegistration) -> SuccessResponse:
         "permissions": ["user:read", "content:read", "content:write"],
         "is_active": True,
     }
-    
+
     # Add to mock database
     MOCK_USERS[user_data.username] = new_user
-    
+
     return SuccessResponse(
         message="User registered successfully",
         data={"user_id": new_user["user_id"], "username": new_user["username"]}
@@ -303,13 +303,13 @@ async def register_user(user_data: UserRegistration) -> SuccessResponse:
 async def get_user_profile(request: Request) -> UserProfile:
     """
     Get current user profile.
-    
+
     Args:
         request: FastAPI request object
-        
+
     Returns:
         User profile information
-        
+
     Raises:
         HTTPException: If user not authenticated
     """
@@ -319,7 +319,7 @@ async def get_user_profile(request: Request) -> UserProfile:
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Not authenticated"
         )
-    
+
     return UserProfile(
         user_id=user["user_id"],
         username=user["username"],
@@ -335,24 +335,24 @@ async def get_user_profile(request: Request) -> UserProfile:
 async def logout(request: Request) -> SuccessResponse:
     """
     Logout current user.
-    
+
     Note: In a real implementation, you would invalidate the token
     by adding it to a blacklist or removing it from a whitelist.
-    
+
     Args:
         request: FastAPI request object
-        
+
     Returns:
         Success response
     """
     user = get_current_user(request)
     username = user.get("username", "unknown") if user else "unknown"
-    
+
     # In a real implementation, you would:
     # 1. Add token to blacklist
     # 2. Remove token from whitelist
     # 3. Clear user session
-    
+
     return SuccessResponse(
         message=f"User {username} logged out successfully"
     )
@@ -364,10 +364,10 @@ async def logout(request: Request) -> SuccessResponse:
 async def list_users(request: Request) -> list[UserProfile]:
     """
     List all users (admin only).
-    
+
     Args:
         request: FastAPI request object
-        
+
     Returns:
         List of user profiles
     """
@@ -382,5 +382,5 @@ async def list_users(request: Request) -> list[UserProfile]:
             permissions=user_data.get("permissions", []),
             is_active=user_data.get("is_active", True)
         ))
-    
+
     return users

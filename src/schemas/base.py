@@ -20,11 +20,11 @@ T = TypeVar('T')
 class BaseSchema(BaseModel):
     """
     Base schema class with common configuration.
-    
+
     This class provides common configuration and functionality
     that all schemas should inherit.
     """
-    
+
     model_config = ConfigDict(
         # Enable validation of assignment
         validate_assignment=True,
@@ -46,10 +46,10 @@ class BaseSchema(BaseModel):
 class TimestampMixin(BaseModel):
     """
     Mixin for schemas that include timestamp fields.
-    
+
     Provides created_at and updated_at fields with proper validation.
     """
-    
+
     created_at: datetime = Field(
         ...,
         description="Timestamp when the resource was created",
@@ -60,7 +60,7 @@ class TimestampMixin(BaseModel):
         description="Timestamp when the resource was last updated",
         json_schema_extra={"example": "2024-01-15T10:30:00Z"}
     )
-    
+
     @field_validator('created_at', 'updated_at')
     @classmethod
     def validate_timestamps(cls, v: datetime) -> datetime:
@@ -74,10 +74,10 @@ class TimestampMixin(BaseModel):
 class IdentifierMixin(BaseModel):
     """
     Mixin for schemas that include an ID field.
-    
+
     Provides a standardized ID field with validation.
     """
-    
+
     id: str = Field(
         ...,
         min_length=1,
@@ -85,7 +85,7 @@ class IdentifierMixin(BaseModel):
         description="Unique identifier for the resource",
         json_schema_extra={"example": "resource_123"}
     )
-    
+
     @field_validator('id')
     @classmethod
     def validate_id(cls, v: str) -> str:
@@ -98,10 +98,10 @@ class IdentifierMixin(BaseModel):
 class PaginationParams(BaseSchema):
     """
     Schema for pagination parameters.
-    
+
     Provides standardized pagination with validation.
     """
-    
+
     skip: int = Field(
         default=0,
         ge=0,
@@ -120,10 +120,10 @@ class PaginationParams(BaseSchema):
 class PaginationMeta(BaseSchema):
     """
     Schema for pagination metadata.
-    
+
     Provides standardized pagination information in responses.
     """
-    
+
     total: int = Field(
         ...,
         ge=0,
@@ -169,10 +169,10 @@ class PaginationMeta(BaseSchema):
 class PaginatedResponse(BaseSchema, Generic[T]):
     """
     Generic schema for paginated responses.
-    
+
     Provides a standardized structure for paginated API responses.
     """
-    
+
     items: List[T] = Field(
         ...,
         description="List of items for the current page"
@@ -186,10 +186,10 @@ class PaginatedResponse(BaseSchema, Generic[T]):
 class SuccessResponse(BaseSchema):
     """
     Schema for successful API responses.
-    
+
     Provides a standardized structure for success responses.
     """
-    
+
     success: bool = Field(
         default=True,
         description="Indicates if the request was successful"
@@ -212,10 +212,10 @@ class SuccessResponse(BaseSchema):
 class ErrorDetail(BaseSchema):
     """
     Schema for error details.
-    
+
     Provides detailed information about validation or other errors.
     """
-    
+
     field: Optional[str] = Field(
         default=None,
         description="Field name that caused the error (for validation errors)",
@@ -236,10 +236,10 @@ class ErrorDetail(BaseSchema):
 class ErrorResponse(BaseSchema):
     """
     Schema for error API responses.
-    
+
     Provides a standardized structure for error responses.
     """
-    
+
     success: bool = Field(
         default=False,
         description="Indicates if the request was successful"
@@ -268,7 +268,7 @@ class ErrorResponse(BaseSchema):
         description="Timestamp of the error",
         json_schema_extra={"example": "2024-01-15T10:30:00Z"}
     )
-    
+
     model_config = ConfigDict(
         json_encoders={
             datetime: lambda v: v.isoformat()
@@ -279,10 +279,10 @@ class ErrorResponse(BaseSchema):
 class HealthStatus(BaseSchema):
     """
     Schema for health check responses.
-    
+
     Provides standardized health status information.
     """
-    
+
     status: str = Field(
         ...,
         description="Health status",
@@ -307,10 +307,10 @@ class HealthStatus(BaseSchema):
 class ServiceCheck(BaseSchema):
     """
     Schema for individual service health checks.
-    
+
     Provides detailed information about service dependencies.
     """
-    
+
     status: str = Field(
         ...,
         description="Service status",
@@ -337,10 +337,10 @@ class ServiceCheck(BaseSchema):
 class ReadinessStatus(BaseSchema):
     """
     Schema for readiness check responses.
-    
+
     Provides detailed readiness information including dependency checks.
     """
-    
+
     status: str = Field(
         ...,
         description="Overall readiness status",
@@ -369,10 +369,10 @@ class ReadinessStatus(BaseSchema):
 class CamelCaseSchema(BaseSchema):
     """
     Base schema that converts field names to camelCase for JSON serialization.
-    
+
     Useful for APIs that need to follow camelCase naming conventions.
     """
-    
+
     model_config = ConfigDict(
         alias_generator=to_camel,
         populate_by_name=True,

@@ -36,17 +36,17 @@ router = APIRouter(
 async def get_metrics() -> Response:
     """
     Get Prometheus metrics endpoint.
-    
+
     This endpoint returns application metrics in Prometheus text format
     for monitoring and alerting systems to scrape.
-    
+
     Returns:
         Plain text response with Prometheus metrics
     """
     try:
         # Get metrics data
         metrics_data = get_metrics_data()
-        
+
         # Return metrics with proper content type
         return PlainTextResponse(
             content=metrics_data,
@@ -57,10 +57,10 @@ async def get_metrics() -> Response:
                 "Expires": "0",
             }
         )
-        
+
     except Exception as e:
         logger.error(f"Error generating metrics: {e}")
-        
+
         # Return error metrics
         error_metrics = f"""# HELP metrics_generation_errors_total Total metrics generation errors
 # TYPE metrics_generation_errors_total counter
@@ -70,7 +70,7 @@ metrics_generation_errors_total 1.0
 # TYPE metrics_last_error_timestamp_seconds gauge
 metrics_last_error_timestamp_seconds {int(time.time())}
 """
-        
+
         return PlainTextResponse(
             content=error_metrics,
             media_type=get_metrics_content_type(),

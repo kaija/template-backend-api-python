@@ -50,24 +50,24 @@ __all__ = [
     "AuditEventType",
     "AuditSeverity",
     "audit_logger",
-    
+
     # Context management
     "set_correlation_id",
     "get_correlation_id",
     "set_user_context",
     "set_request_context",
     "generate_correlation_id",
-    
+
     # Convenience functions
     "log_login_success",
     "log_login_failure",
     "log_suspicious_activity",
-    
+
     # Middleware
     "AuditMiddleware",
     "SecurityEventDetector",
     "security_detector",
-    
+
     # Decorators
     "audit_event",
     "audit_login",

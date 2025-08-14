@@ -1,6 +1,6 @@
 # Multi-stage Dockerfile for production-ready FastAPI application
 # Build stage - Install dependencies and prepare application
-FROM python:3.11-slim as builder
+FROM python:3.11-slim AS builder
 
 # Set environment variables for Python
 ENV PYTHONUNBUFFERED=1 \
@@ -25,7 +25,7 @@ RUN pip install poetry==1.6.1 && \
     poetry export -f requirements.txt --output requirements.txt --without-hashes
 
 # Production stage - Minimal runtime image
-FROM python:3.11-slim as production
+FROM python:3.11-slim AS production
 
 # Set environment variables
 ENV PYTHONUNBUFFERED=1 \

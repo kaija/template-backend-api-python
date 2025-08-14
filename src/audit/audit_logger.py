@@ -23,7 +23,7 @@ request_id_var: ContextVar[Optional[str]] = ContextVar('request_id', default=Non
 
 class AuditEventType(Enum):
     """Audit event types for categorization."""
-    
+
     # Authentication events
     LOGIN_SUCCESS = "auth.login.success"
     LOGIN_FAILURE = "auth.login.failure"
@@ -34,26 +34,26 @@ class AuditEventType(Enum):
     EMAIL_VERIFICATION = "auth.email.verification"
     ACCOUNT_LOCKED = "auth.account.locked"
     ACCOUNT_UNLOCKED = "auth.account.unlocked"
-    
+
     # API Key events
     API_KEY_CREATED = "api.key.created"
     API_KEY_USED = "api.key.used"
     API_KEY_REVOKED = "api.key.revoked"
     API_KEY_EXPIRED = "api.key.expired"
-    
+
     # Data modification events
     USER_CREATED = "data.user.created"
     USER_UPDATED = "data.user.updated"
     USER_DELETED = "data.user.deleted"
     USER_ROLE_CHANGED = "data.user.role.changed"
     USER_STATUS_CHANGED = "data.user.status.changed"
-    
+
     # Administrative events
     ADMIN_LOGIN = "admin.login"
     ADMIN_ACTION = "admin.action"
     SYSTEM_CONFIG_CHANGED = "admin.config.changed"
     BULK_OPERATION = "admin.bulk.operation"
-    
+
     # Security events
     SUSPICIOUS_ACTIVITY = "security.suspicious.activity"
     RATE_LIMIT_EXCEEDED = "security.rate.limit.exceeded"
@@ -61,7 +61,7 @@ class AuditEventType(Enum):
     PERMISSION_DENIED = "security.permission.denied"
     INVALID_TOKEN = "security.token.invalid"
     BRUTE_FORCE_ATTEMPT = "security.brute.force"
-    
+
     # System events
     SYSTEM_STARTUP = "system.startup"
     SYSTEM_SHUTDOWN = "system.shutdown"
@@ -82,50 +82,50 @@ class AuditSeverity(Enum):
 class AuditEvent:
     """
     Structured audit event data.
-    
+
     Represents a single audit event with all relevant metadata.
     """
-    
+
     # Core event information
     event_type: AuditEventType
     severity: AuditSeverity
     message: str
     timestamp: datetime
-    
+
     # Request context
     correlation_id: Optional[str] = None
     request_id: Optional[str] = None
     session_id: Optional[str] = None
-    
+
     # User context
     user_id: Optional[str] = None
     username: Optional[str] = None
     user_role: Optional[str] = None
-    
+
     # Network context
     ip_address: Optional[str] = None
     user_agent: Optional[str] = None
-    
+
     # Resource context
     resource_type: Optional[str] = None
     resource_id: Optional[str] = None
     action: Optional[str] = None
-    
+
     # Additional data
     metadata: Optional[Dict[str, Any]] = None
-    
+
     # Security context
     risk_score: Optional[int] = None
     tags: Optional[List[str]] = None
-    
+
     def to_dict(self) -> Dict[str, Any]:
         """Convert audit event to dictionary for logging."""
         data = asdict(self)
-        
+
         # Convert enum values to strings
         data['event_type'] = self.event_type.value
         data['severity'] = self.severity.value
-        
+
         # Convert timestamp to ISO format
         if isinstance(self.timestamp, (int, float)):
             # Convert Unix timestamp to datetime then to ISO format
@@ -134,10 +134,10 @@ class AuditEvent:
         else:
             # Assume it's already a datetime object
             data['timestamp'] = self.timestamp.isoformat()
-        
+
         # Remove None values to keep logs clean
         return {k: v for k, v in data.items() if v is not None}
-    
+
     def to_json(self) -> str:
         """Convert audit event to JSON string."""
         return json.dumps(self.to_dict(), default=str)
@@ -146,11 +146,11 @@ class AuditEvent:
 class AuditLogger:
     """
     Main audit logging class.
-    
+
     Provides methods for logging various types of audit events with
     automatic context enrichment and structured formatting.
     """
-    
+
     def __init__(
         self,
         logger_name: str = "audit",
@@ -163,7 +163,7 @@ class AuditLogger:
     ):
         """
         Initialize audit logger.
-        
+
         Args:
             logger_name: Name of the logger
             log_level: Logging level
@@ -175,14 +175,14 @@ class AuditLogger:
         """
         self.logger = logging.getLogger(logger_name)
         self.logger.setLevel(log_level)
-        
+
         # Prevent duplicate handlers
         if not self.logger.handlers:
             self._setup_handlers(
                 enable_console, enable_file, log_file_path,
                 max_file_size, backup_count
             )
-    
+
     def _setup_handlers(
         self,
         enable_console: bool,
@@ -195,23 +195,23 @@ class AuditLogger:
         formatter = logging.Formatter(
             '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
         )
-        
+
         # Console handler
         if enable_console:
             console_handler = logging.StreamHandler()
             console_handler.setFormatter(formatter)
             self.logger.addHandler(console_handler)
-        
+
         # File handler with rotation
         if enable_file:
             from logging.handlers import RotatingFileHandler
-            
+
             if log_file_path is None:
                 log_file_path = "logs/audit.log"
-            
+
             # Ensure log directory exists
             Path(log_file_path).parent.mkdir(parents=True, exist_ok=True)
-            
+
             file_handler = RotatingFileHandler(
                 log_file_path,
                 maxBytes=max_file_size,
@@ -219,7 +219,7 @@ class AuditLogger:
             )
             file_handler.setFormatter(formatter)
             self.logger.addHandler(file_handler)
-    
+
     def _get_context(self) -> Dict[str, Any]:
         """Get current request context."""
         return {
@@ -227,7 +227,7 @@ class AuditLogger:
             'user_id': user_id_var.get(),
             'request_id': request_id_var.get(),
         }
-    
+
     def _create_event(
         self,
         event_type: AuditEventType,
@@ -237,14 +237,14 @@ class AuditLogger:
     ) -> AuditEvent:
         """Create audit event with context enrichment."""
         context = self._get_context()
-        
+
         # Use provided user_id if available, otherwise use context
         user_id = kwargs.get('user_id') or context.get('user_id')
-        
+
         # Remove user_id from kwargs to avoid duplicate parameter
         kwargs_copy = kwargs.copy()
         kwargs_copy.pop('user_id', None)
-        
+
         return AuditEvent(
             event_type=event_type,
             severity=severity,
@@ -255,17 +255,17 @@ class AuditLogger:
             request_id=context.get('request_id'),
             **kwargs_copy
         )
-    
+
     def log_event(self, event: AuditEvent) -> None:
         """
         Log an audit event.
-        
+
         Args:
             event: Audit event to log
         """
         # Convert event to structured log message
         log_data = event.to_dict()
-        
+
         # Determine log level based on severity
         level_mapping = {
             AuditSeverity.LOW: logging.INFO,
@@ -273,30 +273,30 @@ class AuditLogger:
             AuditSeverity.HIGH: logging.ERROR,
             AuditSeverity.CRITICAL: logging.CRITICAL,
         }
-        
+
         log_level = level_mapping.get(event.severity, logging.INFO)
-        
+
         # Create extra data for logging, avoiding conflicts with reserved fields
         extra_data = {
             'audit_event': True,
             'audit_event_type': event.event_type.value,
             'audit_severity': event.severity.value,
         }
-        
+
         # Add non-conflicting fields from log_data
         reserved_fields = {'message', 'asctime', 'name', 'levelname', 'levelno', 'pathname', 'filename', 'module', 'lineno', 'funcName', 'created', 'msecs', 'relativeCreated', 'thread', 'threadName', 'processName', 'process'}
-        
+
         for key, value in log_data.items():
             if key not in reserved_fields:
                 extra_data[f'audit_{key}'] = value
-        
+
         # Log the structured event
         self.logger.log(
             log_level,
             json.dumps(log_data, default=str),
             extra=extra_data
         )
-    
+
     # Authentication event methods
     def log_login_success(
         self,
@@ -319,7 +319,7 @@ class AuditLogger:
             **kwargs
         )
         self.log_event(event)
-    
+
     def log_login_failure(
         self,
         username: str,
@@ -341,7 +341,7 @@ class AuditLogger:
             **kwargs
         )
         self.log_event(event)
-    
+
     def log_logout(
         self,
         user_id: str,
@@ -359,7 +359,7 @@ class AuditLogger:
             **kwargs
         )
         self.log_event(event)
-    
+
     def log_password_change(
         self,
         user_id: str,
@@ -377,7 +377,7 @@ class AuditLogger:
             **kwargs
         )
         self.log_event(event)
-    
+
     # API Key event methods
     def log_api_key_created(
         self,
@@ -399,7 +399,7 @@ class AuditLogger:
             **kwargs
         )
         self.log_event(event)
-    
+
     def log_api_key_used(
         self,
         user_id: str,
@@ -422,7 +422,7 @@ class AuditLogger:
             **kwargs
         )
         self.log_event(event)
-    
+
     # Data modification event methods
     def log_user_created(
         self,
@@ -444,7 +444,7 @@ class AuditLogger:
             **kwargs
         )
         self.log_event(event)
-    
+
     def log_user_updated(
         self,
         updated_user_id: str,
@@ -469,7 +469,7 @@ class AuditLogger:
             **kwargs
         )
         self.log_event(event)
-    
+
     # Security event methods
     def log_suspicious_activity(
         self,
@@ -496,7 +496,7 @@ class AuditLogger:
             **kwargs
         )
         self.log_event(event)
-    
+
     def log_rate_limit_exceeded(
         self,
         endpoint: str,
@@ -516,7 +516,7 @@ class AuditLogger:
             **kwargs
         )
         self.log_event(event)
-    
+
     def log_unauthorized_access(
         self,
         resource: str,
@@ -536,7 +536,7 @@ class AuditLogger:
             **kwargs
         )
         self.log_event(event)
-    
+
     # System event methods
     def log_system_startup(self, **kwargs) -> None:
         """Log system startup event."""
@@ -548,7 +548,7 @@ class AuditLogger:
             **kwargs
         )
         self.log_event(event)
-    
+
     def log_error(
         self,
         error_type: str,

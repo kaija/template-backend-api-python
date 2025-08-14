@@ -44,15 +44,15 @@ async def create_user(
 ) -> User:
     """
     Create a new user.
-    
+
     Args:
         user_data: User creation data
         context: Request context
         current_user: Current authenticated user with create permissions
-        
+
     Returns:
         Created user
-        
+
     Raises:
         HTTPException: If user creation fails
     """
@@ -82,7 +82,7 @@ async def list_users(
 ) -> UserList:
     """
     Get a paginated list of users.
-    
+
     Args:
         context: Request context
         skip: Number of users to skip
@@ -90,7 +90,7 @@ async def list_users(
         is_active: Filter by active status
         search: Search term
         current_user: Current authenticated user with read permissions
-        
+
     Returns:
         Paginated list of users
     """
@@ -100,7 +100,7 @@ async def list_users(
         filters["is_active"] = is_active
     if search:
         filters["search"] = search
-    
+
     result = await user_controller.get_all(skip=skip, limit=limit, filters=filters)
     return UserList(**result)
 
@@ -118,15 +118,15 @@ async def get_user(
 ) -> User:
     """
     Get a user by ID.
-    
+
     Args:
         user_id: User ID
         context: Request context
         current_user: Current authenticated user with read permissions
-        
+
     Returns:
         User information
-        
+
     Raises:
         HTTPException: If user is not found
     """
@@ -153,16 +153,16 @@ async def update_user(
 ) -> User:
     """
     Update a user.
-    
+
     Args:
         user_id: User ID
         user_data: User update data
         context: Request context
         current_user: Current authenticated user with update permissions
-        
+
     Returns:
         Updated user information
-        
+
     Raises:
         HTTPException: If user is not found
     """
@@ -188,12 +188,12 @@ async def delete_user(
 ) -> None:
     """
     Delete a user.
-    
+
     Args:
         user_id: User ID
         context: Request context
         current_user: Current authenticated user with delete permissions
-        
+
     Raises:
         HTTPException: If user is not found
     """
@@ -218,15 +218,15 @@ async def get_user_by_email(
 ) -> User:
     """
     Get a user by email address.
-    
+
     Args:
         email: User email address
         context: Request context
         current_user: Current authenticated user with read permissions
-        
+
     Returns:
         User information
-        
+
     Raises:
         HTTPException: If user is not found
     """
@@ -252,15 +252,15 @@ async def activate_user(
 ) -> User:
     """
     Activate a user account.
-    
+
     Args:
         user_id: User ID
         context: Request context
         current_user: Current authenticated user with update permissions
-        
+
     Returns:
         Updated user information
-        
+
     Raises:
         HTTPException: If user is not found
     """
@@ -286,15 +286,15 @@ async def deactivate_user(
 ) -> User:
     """
     Deactivate a user account.
-    
+
     Args:
         user_id: User ID
         context: Request context
         current_user: Current authenticated user with update permissions
-        
+
     Returns:
         Updated user information
-        
+
     Raises:
         HTTPException: If user is not found
     """

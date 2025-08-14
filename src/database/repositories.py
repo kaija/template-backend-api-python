@@ -41,31 +41,31 @@ class DuplicateError(RepositoryError):
 class BaseRepository(Generic[T], ABC):
     """
     Abstract base repository class.
-    
+
     Provides common CRUD operations for all repositories.
     """
-    
+
     def __init__(self, session: AsyncSession, model_class: Type[T]):
         """
         Initialize repository.
-        
+
         Args:
             session: SQLAlchemy async session
             model_class: Model class for this repository
         """
         self.session = session
         self.model_class = model_class
-    
+
     async def create(self, **kwargs) -> T:
         """
         Create a new record.
-        
+
         Args:
             **kwargs: Field values for the new record
-            
+
         Returns:
             Created model instance
-            
+
         Raises:
             DuplicateError: If record violates unique constraints
         """
@@ -74,7 +74,7 @@ class BaseRepository(Generic[T], ABC):
             self.session.add(instance)
             await self.session.flush()
             await self.session.refresh(instance)
-            
+
             logger.info(
                 f"Created {self.model_class.__name__} with ID: {instance.id}",
                 extra={
@@ -83,9 +83,9 @@ class BaseRepository(Generic[T], ABC):
                     "record_id": instance.id,
                 }
             )
-            
+
             return instance
-            
+
         except IntegrityError as e:
             await self.session.rollback()
             logger.warning(
@@ -97,14 +97,14 @@ class BaseRepository(Generic[T], ABC):
                 }
             )
             raise DuplicateError(f"Record violates unique constraints: {e}")
-    
+
     async def get_by_id(self, record_id: str) -> Optional[T]:
         """
         Get record by ID.
-        
+
         Args:
             record_id: Record ID
-            
+
         Returns:
             Model instance or None if not found
         """
@@ -112,17 +112,17 @@ class BaseRepository(Generic[T], ABC):
             select(self.model_class).where(self.model_class.id == record_id)
         )
         return result.scalar_one_or_none()
-    
+
     async def get_by_id_or_raise(self, record_id: str) -> T:
         """
         Get record by ID or raise exception.
-        
+
         Args:
             record_id: Record ID
-            
+
         Returns:
             Model instance
-            
+
         Raises:
             NotFoundError: If record is not found
         """
@@ -130,30 +130,30 @@ class BaseRepository(Generic[T], ABC):
         if instance is None:
             raise NotFoundError(f"{self.model_class.__name__} with ID {record_id} not found")
         return instance
-    
+
     async def update(self, record_id: str, **kwargs) -> T:
         """
         Update record by ID.
-        
+
         Args:
             record_id: Record ID
             **kwargs: Field values to update
-            
+
         Returns:
             Updated model instance
-            
+
         Raises:
             NotFoundError: If record is not found
         """
         instance = await self.get_by_id_or_raise(record_id)
-        
+
         for key, value in kwargs.items():
             if hasattr(instance, key):
                 setattr(instance, key, value)
-        
+
         await self.session.flush()
         await self.session.refresh(instance)
-        
+
         logger.info(
             f"Updated {self.model_class.__name__} with ID: {record_id}",
             extra={
@@ -163,25 +163,25 @@ class BaseRepository(Generic[T], ABC):
                 "updated_fields": list(kwargs.keys()),
             }
         )
-        
+
         return instance
-    
+
     async def delete(self, record_id: str) -> bool:
         """
         Delete record by ID.
-        
+
         Args:
             record_id: Record ID
-            
+
         Returns:
             True if record was deleted, False if not found
         """
         result = await self.session.execute(
             delete(self.model_class).where(self.model_class.id == record_id)
         )
-        
+
         deleted = result.rowcount > 0
-        
+
         if deleted:
             logger.info(
                 f"Deleted {self.model_class.__name__} with ID: {record_id}",
@@ -191,44 +191,44 @@ class BaseRepository(Generic[T], ABC):
                     "record_id": record_id,
                 }
             )
-        
+
         return deleted
-    
+
     async def list_all(
-        self, 
-        limit: Optional[int] = None, 
+        self,
+        limit: Optional[int] = None,
         offset: Optional[int] = None,
         order_by: Optional[str] = None
     ) -> List[T]:
         """
         List all records.
-        
+
         Args:
             limit: Maximum number of records to return
             offset: Number of records to skip
             order_by: Field name to order by
-            
+
         Returns:
             List of model instances
         """
         query = select(self.model_class)
-        
+
         if order_by and hasattr(self.model_class, order_by):
             query = query.order_by(getattr(self.model_class, order_by))
-        
+
         if offset:
             query = query.offset(offset)
-        
+
         if limit:
             query = query.limit(limit)
-        
+
         result = await self.session.execute(query)
         return list(result.scalars().all())
-    
+
     async def count(self) -> int:
         """
         Count total number of records.
-        
+
         Returns:
             Total record count
         """
@@ -236,14 +236,14 @@ class BaseRepository(Generic[T], ABC):
             select(func.count(self.model_class.id))
         )
         return result.scalar() or 0
-    
+
     async def exists(self, record_id: str) -> bool:
         """
         Check if record exists.
-        
+
         Args:
             record_id: Record ID
-            
+
         Returns:
             True if record exists, False otherwise
         """
@@ -258,20 +258,20 @@ class BaseRepository(Generic[T], ABC):
 class UserRepository(BaseRepository[User]):
     """
     Repository for User model operations.
-    
+
     Provides user-specific database operations and queries.
     """
-    
+
     def __init__(self, session: AsyncSession):
         super().__init__(session, User)
-    
+
     async def get_by_username(self, username: str) -> Optional[User]:
         """
         Get user by username.
-        
+
         Args:
             username: Username to search for
-            
+
         Returns:
             User instance or None if not found
         """
@@ -279,14 +279,14 @@ class UserRepository(BaseRepository[User]):
             select(User).where(User.username == username)
         )
         return result.scalar_one_or_none()
-    
+
     async def get_by_email(self, email: str) -> Optional[User]:
         """
         Get user by email.
-        
+
         Args:
             email: Email to search for
-            
+
         Returns:
             User instance or None if not found
         """
@@ -294,14 +294,14 @@ class UserRepository(BaseRepository[User]):
             select(User).where(User.email == email)
         )
         return result.scalar_one_or_none()
-    
+
     async def get_by_username_or_email(self, identifier: str) -> Optional[User]:
         """
         Get user by username or email.
-        
+
         Args:
             identifier: Username or email to search for
-            
+
         Returns:
             User instance or None if not found
         """
@@ -311,7 +311,7 @@ class UserRepository(BaseRepository[User]):
             )
         )
         return result.scalar_one_or_none()
-    
+
     async def create_user(
         self,
         username: str,
@@ -321,16 +321,16 @@ class UserRepository(BaseRepository[User]):
     ) -> User:
         """
         Create a new user.
-        
+
         Args:
             username: Unique username
             email: Unique email address
             hashed_password: Bcrypt hashed password
             **kwargs: Additional user fields
-            
+
         Returns:
             Created user instance
-            
+
         Raises:
             DuplicateError: If username or email already exists
         """
@@ -345,20 +345,20 @@ class UserRepository(BaseRepository[User]):
 class APIKeyRepository(BaseRepository[APIKey]):
     """
     Repository for API Key model operations.
-    
+
     Provides API key-specific database operations and queries.
     """
-    
+
     def __init__(self, session: AsyncSession):
         super().__init__(session, APIKey)
-    
+
     async def get_by_key_hash(self, key_hash: str) -> Optional[APIKey]:
         """
         Get API key by hash.
-        
+
         Args:
             key_hash: Hashed API key value
-            
+
         Returns:
             APIKey instance or None if not found
         """
@@ -374,18 +374,18 @@ class APIKeyRepository(BaseRepository[APIKey]):
 class RepositoryFactory:
     """
     Factory class for creating repository instances.
-    
+
     Provides a centralized way to create repositories with proper session management.
     """
-    
+
     def __init__(self, session: AsyncSession):
         self.session = session
-    
+
     @property
     def users(self) -> UserRepository:
         """Get user repository."""
         return UserRepository(self.session)
-    
+
     @property
     def api_keys(self) -> APIKeyRepository:
         """Get API key repository."""

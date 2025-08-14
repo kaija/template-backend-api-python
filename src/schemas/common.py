@@ -22,7 +22,7 @@ class SortOrder(str, Enum):
 
 class SortParams(BaseSchema):
     """Schema for sorting parameters."""
-    
+
     sort_by: Optional[str] = Field(
         default=None,
         max_length=50,
@@ -34,24 +34,24 @@ class SortParams(BaseSchema):
         description="Sort order (asc or desc)",
         json_schema_extra={"example": "asc"}
     )
-    
+
     @field_validator('sort_by')
     @classmethod
     def validate_sort_by(cls, v: Optional[str]) -> Optional[str]:
         """Validate sort field name."""
         if v is None:
             return v
-        
+
         # Only allow alphanumeric characters, underscores, and dots
         if not v.replace('_', '').replace('.', '').isalnum():
             raise ValueError("Sort field can only contain letters, numbers, underscores, and dots")
-        
+
         return v
 
 
 class BulkOperation(BaseSchema):
     """Schema for bulk operation requests."""
-    
+
     ids: List[str] = Field(
         ...,
         min_length=1,
@@ -59,32 +59,32 @@ class BulkOperation(BaseSchema):
         description="List of resource IDs to operate on (max 100)",
         json_schema_extra={"example": ["id1", "id2", "id3"]}
     )
-    
+
     @field_validator('ids')
     @classmethod
     def validate_ids(cls, v: List[str]) -> List[str]:
         """Validate list of IDs."""
         if not v:
             raise ValueError("At least one ID is required")
-        
+
         if len(v) > 100:
             raise ValueError("Cannot operate on more than 100 items at once")
-        
+
         # Check for duplicates
         if len(v) != len(set(v)):
             raise ValueError("Duplicate IDs are not allowed")
-        
+
         # Validate each ID
         for id_val in v:
             if not id_val or id_val.isspace():
                 raise ValueError("IDs cannot be empty or whitespace")
-        
+
         return v
 
 
 class BulkOperationResult(BaseSchema):
     """Schema for bulk operation results."""
-    
+
     total: int = Field(
         ...,
         ge=0,
@@ -117,7 +117,7 @@ class BulkOperationResult(BaseSchema):
 
 class HealthCheckResponse(SuccessResponse):
     """Schema for health check responses."""
-    
+
     data: Dict[str, Any] = Field(
         ...,
         description="Health check data"
@@ -126,7 +126,7 @@ class HealthCheckResponse(SuccessResponse):
 
 class ReadinessCheckResponse(BaseSchema):
     """Schema for readiness check responses."""
-    
+
     success: bool = Field(
         ...,
         description="Overall readiness status"
@@ -147,7 +147,7 @@ class ReadinessCheckResponse(BaseSchema):
 
 class APIInfo(BaseSchema):
     """Schema for API information responses."""
-    
+
     name: str = Field(
         ...,
         description="API name",
@@ -182,7 +182,7 @@ class APIInfo(BaseSchema):
 
 class SearchParams(BaseSchema):
     """Schema for search parameters."""
-    
+
     query: str = Field(
         ...,
         min_length=1,
@@ -206,51 +206,51 @@ class SearchParams(BaseSchema):
         description="Whether search should be case sensitive",
         json_schema_extra={"example": False}
     )
-    
+
     @field_validator('query')
     @classmethod
     def validate_query(cls, v: str) -> str:
         """Validate search query."""
         v = v.strip()
-        
+
         if not v:
             raise ValueError("Search query cannot be empty")
-        
+
         # Remove potentially dangerous characters
         dangerous_chars = ['<', '>', '"', "'", '&', ';', '(', ')', '{', '}']
         if any(char in v for char in dangerous_chars):
             raise ValueError("Search query contains invalid characters")
-        
+
         return v
-    
+
     @field_validator('fields')
     @classmethod
     def validate_fields(cls, v: Optional[List[str]]) -> Optional[List[str]]:
         """Validate search fields."""
         if v is None:
             return v
-        
+
         if not v:
             raise ValueError("Fields list cannot be empty if provided")
-        
+
         # Validate field names
         for field in v:
             if not field or field.isspace():
                 raise ValueError("Field names cannot be empty")
-            
+
             if not field.replace('_', '').replace('.', '').isalnum():
                 raise ValueError("Field names can only contain letters, numbers, underscores, and dots")
-        
+
         # Check for duplicates
         if len(v) != len(set(v)):
             raise ValueError("Duplicate field names are not allowed")
-        
+
         return v
 
 
 class DateRangeParams(BaseSchema):
     """Schema for date range filtering parameters."""
-    
+
     start_date: Optional[datetime] = Field(
         default=None,
         description="Start date for filtering",
@@ -261,18 +261,18 @@ class DateRangeParams(BaseSchema):
         description="End date for filtering",
         json_schema_extra={"example": "2024-12-31T23:59:59Z"}
     )
-    
+
     def model_post_init(self, __context) -> None:
         """Validate date range after model initialization."""
-        if (self.start_date is not None and 
-            self.end_date is not None and 
+        if (self.start_date is not None and
+            self.end_date is not None and
             self.start_date >= self.end_date):
             raise ValueError("start_date must be before end_date")
 
 
 class FileUploadInfo(BaseSchema):
     """Schema for file upload information."""
-    
+
     filename: str = Field(
         ...,
         min_length=1,
@@ -296,36 +296,36 @@ class FileUploadInfo(BaseSchema):
         description="URL where the file was uploaded",
         json_schema_extra={"example": "/uploads/document.pdf"}
     )
-    
+
     @field_validator('filename')
     @classmethod
     def validate_filename(cls, v: str) -> str:
         """Validate filename."""
         v = v.strip()
-        
+
         if not v:
             raise ValueError("Filename cannot be empty")
-        
+
         # Check for dangerous characters
         dangerous_chars = ['/', '\\', ':', '*', '?', '"', '<', '>', '|']
         if any(char in v for char in dangerous_chars):
             raise ValueError("Filename contains invalid characters")
-        
+
         return v
-    
+
     @field_validator('content_type')
     @classmethod
     def validate_content_type(cls, v: str) -> str:
         """Validate content type."""
         if not v or '/' not in v:
             raise ValueError("Invalid content type format")
-        
+
         return v.lower()
 
 
 class StatusUpdate(BaseSchema):
     """Schema for status update operations."""
-    
+
     status: str = Field(
         ...,
         min_length=1,
@@ -339,18 +339,18 @@ class StatusUpdate(BaseSchema):
         description="Reason for status change",
         json_schema_extra={"example": "User requested activation"}
     )
-    
+
     @field_validator('status')
     @classmethod
     def validate_status(cls, v: str) -> str:
         """Validate status value."""
         v = v.strip().lower()
-        
+
         if not v:
             raise ValueError("Status cannot be empty")
-        
+
         # Only allow alphanumeric characters and underscores
         if not v.replace('_', '').isalnum():
             raise ValueError("Status can only contain letters, numbers, and underscores")
-        
+
         return v

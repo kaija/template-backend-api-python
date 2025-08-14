@@ -38,7 +38,7 @@ app_info = Info(
 app_info.info({
     "name": getattr(settings, "app_name", "production-api-framework"),
     "version": getattr(settings, "version", "0.1.0"),
-    "environment": settings.env,
+    "environment": getattr(settings, "env", "development"),
 })
 
 # HTTP request metrics
@@ -184,16 +184,16 @@ cpu_usage_percent = Gauge(
 class MetricsCollector:
     """
     Metrics collector for tracking application metrics.
-    
+
     This class provides methods for tracking various application metrics
     and updating Prometheus counters, histograms, and gauges.
     """
-    
+
     def __init__(self):
         """Initialize metrics collector."""
         self.logger = get_logger(__name__)
         self._cache_stats = {"hits": 0, "misses": 0}
-    
+
     def track_http_request(
         self,
         method: str,
@@ -205,7 +205,7 @@ class MetricsCollector:
     ) -> None:
         """
         Track HTTP request metrics.
-        
+
         Args:
             method: HTTP method
             endpoint: Request endpoint
@@ -221,34 +221,34 @@ class MetricsCollector:
                 endpoint=endpoint,
                 status_code=status_code
             ).inc()
-            
+
             # Track request duration
             http_request_duration_seconds.labels(
                 method=method,
                 endpoint=endpoint
             ).observe(duration_seconds)
-            
+
             # Track request size
             if request_size is not None:
                 http_request_size_bytes.labels(
                     method=method,
                     endpoint=endpoint
                 ).observe(request_size)
-            
+
             # Track response size
             if response_size is not None:
                 http_response_size_bytes.labels(
                     method=method,
                     endpoint=endpoint
                 ).observe(response_size)
-                
+
         except Exception as e:
             self.logger.error(f"Error tracking HTTP request metrics: {e}")
-    
+
     def track_auth_attempt(self, method: str, outcome: str) -> None:
         """
         Track authentication attempt.
-        
+
         Args:
             method: Authentication method (jwt, api_key, oauth2)
             outcome: Authentication outcome (success, failure)
@@ -257,11 +257,11 @@ class MetricsCollector:
             auth_attempts_total.labels(method=method, outcome=outcome).inc()
         except Exception as e:
             self.logger.error(f"Error tracking auth attempt metrics: {e}")
-    
+
     def update_active_tokens(self, count: int) -> None:
         """
         Update active tokens count.
-        
+
         Args:
             count: Number of active tokens
         """
@@ -269,7 +269,7 @@ class MetricsCollector:
             auth_tokens_active.set(count)
         except Exception as e:
             self.logger.error(f"Error updating active tokens metrics: {e}")
-    
+
     def track_db_query(
         self,
         operation: str,
@@ -279,7 +279,7 @@ class MetricsCollector:
     ) -> None:
         """
         Track database query metrics.
-        
+
         Args:
             operation: Database operation (SELECT, INSERT, UPDATE, DELETE)
             table: Table name
@@ -292,33 +292,33 @@ class MetricsCollector:
                 table=table,
                 status=status
             ).inc()
-            
+
             db_query_duration_seconds.labels(
                 operation=operation,
                 table=table
             ).observe(duration_seconds)
-            
+
         except Exception as e:
             self.logger.error(f"Error tracking database query metrics: {e}")
-    
+
     def update_db_connections(self, active_count: int, total_created: Optional[int] = None) -> None:
         """
         Update database connection metrics.
-        
+
         Args:
             active_count: Number of active connections
             total_created: Total connections created (optional)
         """
         try:
             db_connections_active.set(active_count)
-            
+
             if total_created is not None:
                 # This would typically be called once with the total
                 db_connections_total._value._value = total_created
-                
+
         except Exception as e:
             self.logger.error(f"Error updating database connection metrics: {e}")
-    
+
     def track_external_api_request(
         self,
         service: str,
@@ -328,7 +328,7 @@ class MetricsCollector:
     ) -> None:
         """
         Track external API request metrics.
-        
+
         Args:
             service: External service name
             method: HTTP method
@@ -341,19 +341,19 @@ class MetricsCollector:
                 method=method,
                 status_code=status_code
             ).inc()
-            
+
             external_api_request_duration_seconds.labels(
                 service=service,
                 method=method
             ).observe(duration_seconds)
-            
+
         except Exception as e:
             self.logger.error(f"Error tracking external API request metrics: {e}")
-    
+
     def track_cache_operation(self, operation: str, outcome: str) -> None:
         """
         Track cache operation metrics.
-        
+
         Args:
             operation: Cache operation (get, set, delete)
             outcome: Operation outcome (hit, miss, success, error)
@@ -363,26 +363,26 @@ class MetricsCollector:
                 operation=operation,
                 outcome=outcome
             ).inc()
-            
+
             # Update cache hit ratio
             if operation == "get":
                 if outcome == "hit":
                     self._cache_stats["hits"] += 1
                 elif outcome == "miss":
                     self._cache_stats["misses"] += 1
-                
+
                 total_requests = self._cache_stats["hits"] + self._cache_stats["misses"]
                 if total_requests > 0:
                     hit_ratio = self._cache_stats["hits"] / total_requests
                     cache_hit_ratio.set(hit_ratio)
-            
+
         except Exception as e:
             self.logger.error(f"Error tracking cache operation metrics: {e}")
-    
+
     def update_active_users(self, count: int) -> None:
         """
         Update active users count.
-        
+
         Args:
             count: Number of active users
         """
@@ -390,11 +390,11 @@ class MetricsCollector:
             active_users.set(count)
         except Exception as e:
             self.logger.error(f"Error updating active users metrics: {e}")
-    
+
     def track_business_operation(self, operation: str, outcome: str) -> None:
         """
         Track business operation metrics.
-        
+
         Args:
             operation: Business operation name
             outcome: Operation outcome (success, failure)
@@ -406,11 +406,11 @@ class MetricsCollector:
             ).inc()
         except Exception as e:
             self.logger.error(f"Error tracking business operation metrics: {e}")
-    
+
     def track_error(self, error_type: str, component: str) -> None:
         """
         Track error metrics.
-        
+
         Args:
             error_type: Type of error (validation, authentication, database, etc.)
             component: Component where error occurred
@@ -422,11 +422,11 @@ class MetricsCollector:
             ).inc()
         except Exception as e:
             self.logger.error(f"Error tracking error metrics: {e}")
-    
+
     def update_resource_usage(self, memory_bytes: Optional[int] = None, cpu_percent: Optional[float] = None) -> None:
         """
         Update resource usage metrics.
-        
+
         Args:
             memory_bytes: Memory usage in bytes
             cpu_percent: CPU usage percentage
@@ -434,10 +434,10 @@ class MetricsCollector:
         try:
             if memory_bytes is not None:
                 memory_usage_bytes.set(memory_bytes)
-            
+
             if cpu_percent is not None:
                 cpu_usage_percent.set(cpu_percent)
-                
+
         except Exception as e:
             self.logger.error(f"Error updating resource usage metrics: {e}")
 
@@ -449,7 +449,7 @@ metrics_collector = MetricsCollector()
 def get_metrics_data() -> str:
     """
     Get Prometheus metrics data in text format.
-    
+
     Returns:
         Prometheus metrics data as string
     """
@@ -459,7 +459,7 @@ def get_metrics_data() -> str:
 def get_metrics_content_type() -> str:
     """
     Get Prometheus metrics content type.
-    
+
     Returns:
         Content type for Prometheus metrics
     """
@@ -469,27 +469,27 @@ def get_metrics_content_type() -> str:
 class MetricsTimer:
     """
     Context manager for timing operations and updating metrics.
-    
+
     Usage:
         with MetricsTimer() as timer:
             # Do some operation
             pass
-        
+
         # Timer automatically tracks duration
         metrics_collector.track_db_query("SELECT", "users", timer.duration)
     """
-    
+
     def __init__(self):
         """Initialize metrics timer."""
         self.start_time = None
         self.end_time = None
         self.duration = None
-    
+
     def __enter__(self):
         """Start timing."""
         self.start_time = time.time()
         return self
-    
+
     def __exit__(self, exc_type, exc_val, exc_tb):
         """Stop timing and calculate duration."""
         self.end_time = time.time()
@@ -520,20 +520,20 @@ def track_error(error_type: str, component: str) -> None:
 def cleanup_metrics() -> None:
     """
     Cleanup metrics resources during application shutdown.
-    
+
     This function performs any necessary cleanup for the metrics system,
     such as flushing pending metrics or closing connections.
     """
     try:
         logger.info("Cleaning up metrics resources...")
-        
+
         # Clear the registry if needed (optional, usually not necessary)
         # REGISTRY.clear()
-        
+
         # Reset cache stats
         metrics_collector._cache_stats = {"hits": 0, "misses": 0}
-        
+
         logger.info("Metrics cleanup completed")
-        
+
     except Exception as e:
         logger.error(f"Error during metrics cleanup: {e}", exc_info=True)

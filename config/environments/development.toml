@@ -16,8 +16,7 @@ database_url = "postgresql+asyncpg://postgres:password@localhost:5432/api_dev"
 redis_url = "redis://localhost:6379/0"
 
 # Development CORS - allow all origins
-cors_origins = ["http://localhost:3000", "http://localhost:8080", "http://127.0.0.1:3000"]
-cors_allow_origins = ["http://localhost:3000", "http://localhost:8080", "http://127.0.0.1:3000"]
+cors_origins = ["http://localhost:3000", "http://localhost:8080", "http://127.0.0.1:3000", "https://cdn.jsdelivr.net"]
 
 # Development monitoring
 sentry_environment = "development"
@@ -39,3 +38,9 @@ mask_sensitive_logs = false  # Allow more detailed logs in development
 # Development features
 feature_registration_enabled = true
 feature_email_verification = false
+
+# Development documentation settings
+docs_enabled_in_production = true
+docs_require_auth = false
+docs_api_key = "dev-docs-key-123"
+swagger_oauth2_enabled = true

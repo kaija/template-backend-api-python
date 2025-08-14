@@ -86,6 +86,10 @@ services:
       target: production
     environment:
       - ENV_FOR_DYNACONF=development
+      - API_ENV=development
+      - API_DATABASE_URL=postgresql+asyncpg://api_user:api_password@postgres:5432/api_db
+      - API_REDIS_URL=redis://redis:6379/0
+      - API_SECRET_KEY=docker-development-secret-key-change-this-in-production
       - DATABASE_URL=postgresql+asyncpg://api_user:api_password@postgres:5432/api_db
     volumes:
       - ./migrations:/app/migrations
