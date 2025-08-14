@@ -139,7 +139,8 @@ class UserCreate(UserBase):
         # Check for common weak passwords
         weak_passwords = {
             'password', 'password123', '12345678', 'qwerty123',
-            'admin123', 'letmein', 'welcome123', 'changeme'
+            'admin123', 'letmein', 'welcome123', 'changeme',
+            'password123!', 'admin123!', 'welcome123!'  # Add some that meet basic requirements
         }
 
         if v.lower() in weak_passwords:

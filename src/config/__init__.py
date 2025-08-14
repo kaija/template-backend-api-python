@@ -44,6 +44,11 @@ from .environment import (
     print_environment_info,
 )
 
+# Create convenience function for get_environment
+def get_environment() -> Environment:
+    """Get the current environment."""
+    return EnvironmentDetector.detect_environment()
+
 # Export commonly used items
 __all__ = [
     # Main settings object
@@ -65,6 +70,7 @@ __all__ = [
     "get_logging_config",
     "get_jwt_config",
     "get_feature_flags",
+    "get_environment",
 
     # Debug functions
     "print_configuration_summary",

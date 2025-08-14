@@ -62,8 +62,9 @@ async def verify_docs_access(
         return True
 
     # Check API key in header
-    api_key = request.headers.get(config["api_key_header"])
-    if api_key and config["api_key"] and api_key == config["api_key"]:
+    api_key_header = config.get("api_key_header", "X-Docs-API-Key")
+    api_key = request.headers.get(api_key_header)
+    if api_key and config.get("api_key") and api_key == config["api_key"]:
         return True
 
     # Check Bearer token

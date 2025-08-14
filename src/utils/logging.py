@@ -188,7 +188,8 @@ class TimestampProcessor:
         Returns:
             Updated event dictionary with timestamp
         """
-        event_dict["timestamp"] = datetime.utcnow().isoformat() + "Z"
+        from datetime import timezone
+        event_dict["timestamp"] = datetime.now(timezone.utc).isoformat().replace('+00:00', 'Z')
         return event_dict
 
 
@@ -550,3 +551,16 @@ def log_external_api_call(
 
 # Initialize structlog when module is imported
 configure_structlog()
+
+# Create a default logger instance for backward compatibility
+logger = get_logger(__name__)
+
+
+def setup_logging() -> None:
+    """
+    Set up logging configuration.
+    
+    This function is provided for backward compatibility and testing.
+    The actual configuration is done automatically when the module is imported.
+    """
+    configure_structlog()

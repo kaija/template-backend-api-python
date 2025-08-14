@@ -203,7 +203,7 @@ class TestTestFrameworkIntegration:
         # Test response schema validation
         APITestHelper.assert_response_schema(
             result,
-            required_fields=["id", "message"]
+            expected_fields=["id", "message"]
         )
     
     def test_configuration_integration(self):

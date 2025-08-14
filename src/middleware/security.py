@@ -370,10 +370,10 @@ class TrustedHostMiddleware(BaseHTTPMiddleware):
 
         # Validate host
         if not self._is_allowed_host(host):
-            from fastapi import HTTPException
-            raise HTTPException(
+            from starlette.responses import JSONResponse
+            return JSONResponse(
                 status_code=400,
-                detail="Invalid host header"
+                content={"detail": "Invalid host header"}
             )
 
         return await call_next(request)

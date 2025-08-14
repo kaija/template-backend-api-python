@@ -178,8 +178,8 @@ class TestUserSchemas:
             UserCreate(
                 username="testuser",
                 email="test@example.com",
-                password="password",
-                confirm_password="password"
+                password="Password123!",  # Meets all requirements but is common
+                confirm_password="Password123!"
             )
         
         assert "common" in str(exc_info.value).lower()
@@ -313,7 +313,8 @@ class TestCommonSchemas:
         with pytest.raises(ValidationError) as exc_info:
             BulkOperation(ids=[])
         
-        assert "at least one" in str(exc_info.value).lower()
+        error_msg = str(exc_info.value).lower()
+        assert "at least" in error_msg and ("one" in error_msg or "1" in error_msg)
     
     def test_bulk_operation_too_many_ids(self):
         """Test bulk operation with too many IDs."""

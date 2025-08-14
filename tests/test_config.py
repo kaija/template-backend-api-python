@@ -11,7 +11,7 @@ from dataclasses import dataclass
 
 
 @dataclass
-class TestConfig:
+class ConfigForTesting:
     """
     Configuration class for test settings.
     
@@ -48,12 +48,12 @@ class TestConfig:
     coverage_fail_under: float = 75.0
     
     @classmethod
-    def from_env(cls) -> "TestConfig":
+    def from_env(cls) -> "ConfigForTesting":
         """
         Create test configuration from environment variables.
         
         Returns:
-            TestConfig instance with values from environment
+            ConfigForTesting instance with values from environment
         """
         return cls(
             database_url=os.getenv("TEST_DATABASE_URL", cls.database_url),
@@ -96,7 +96,7 @@ class TestConfig:
 
 
 # Global test configuration instance
-test_config = TestConfig.from_env()
+test_config = ConfigForTesting.from_env()
 
 
 class TestCategories:
@@ -415,7 +415,7 @@ class TestAssertions:
 # Export commonly used items
 __all__ = [
     "test_config",
-    "TestConfig",
+    "ConfigForTesting",
     "TestCategories",
     "TestData",
     "TestEndpoints",

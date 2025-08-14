@@ -30,8 +30,8 @@ class Base(DeclarativeBase):
         """Generate table name from class name."""
         # Convert CamelCase to snake_case
         import re
-        name = re.sub('(.)([A-Z][a-z]+)', r'\\1_\\2', cls.__name__)
-        return re.sub('([a-z0-9])([A-Z])', r'\\1_\\2', name).lower()
+        name = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', cls.__name__)
+        return re.sub('([a-z0-9])([A-Z])', r'\1_\2', name).lower()
 
     # Primary key - use UUID for better distribution and security
     id: Mapped[str] = mapped_column(

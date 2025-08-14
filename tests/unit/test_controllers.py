@@ -103,7 +103,8 @@ class TestUserController:
             username="testuser",
             email="test@example.com",
             full_name="Test User",
-            password="testpassword123"
+            password="TestPassword123!",  # Meets all password requirements
+            confirm_password="TestPassword123!"
         )
     
     @pytest.mark.asyncio

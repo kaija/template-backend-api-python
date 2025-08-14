@@ -38,7 +38,11 @@ class TestFastAPIApplication:
         response = client.get("/healthz")
         assert response.status_code == 200
         
-        data = response.json()
+        response_data = response.json()
+        assert response_data["success"] is True
+        assert "data" in response_data
+        
+        data = response_data["data"]
         assert data["status"] == "healthy"
         assert "timestamp" in data
         assert "version" in data

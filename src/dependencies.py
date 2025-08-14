@@ -7,7 +7,7 @@ including authentication, database sessions, and other common dependencies.
 
 import logging
 from typing import Optional, Dict, Any, Annotated
-from datetime import datetime
+from datetime import datetime, timezone
 
 from fastapi import Depends, HTTPException, status, Request, Header
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
@@ -40,7 +40,7 @@ async def get_request_id(
         return x_request_id
 
     # Generate request ID if not provided
-    request_id = f"req_{datetime.utcnow().timestamp()}_{id(request)}"
+    request_id = f"req_{datetime.now(timezone.utc).timestamp()}_{id(request)}"
     return request_id
 
 
@@ -133,7 +133,7 @@ async def get_request_context(
         "query_params": dict(request.query_params),
         "user_agent": user_agent,
         "client_ip": client_ip,
-        "timestamp": datetime.utcnow().isoformat(),
+        "timestamp": datetime.now(timezone.utc).isoformat(),
     }
 
 

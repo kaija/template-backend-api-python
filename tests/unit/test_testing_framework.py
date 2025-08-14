@@ -272,11 +272,13 @@ class TestMockHelper:
         assert hasattr(mock_session, 'close')
 
 
-class TestDataValidator:
-    """Test the data validation utilities."""
+class TestDataValidatorUtils:
+    """Test the data validation utilities from tests.utils."""
     
     def test_validate_timestamp_iso_format(self):
         """Test timestamp validation with ISO format."""
+        from tests.utils import TestDataValidator
+        
         timestamp_str = "2024-01-01T12:00:00Z"
         result = TestDataValidator.validate_timestamp(timestamp_str)
         
@@ -287,31 +289,43 @@ class TestDataValidator:
     
     def test_validate_timestamp_invalid_format(self):
         """Test timestamp validation with invalid format."""
+        from tests.utils import TestDataValidator
+        
         with pytest.raises(ValueError):
             TestDataValidator.validate_timestamp("invalid-timestamp")
     
     def test_validate_uuid_valid(self):
         """Test UUID validation with valid UUID."""
+        from tests.utils import TestDataValidator
+        
         valid_uuid = "123e4567-e89b-12d3-a456-426614174000"
         assert TestDataValidator.validate_uuid(valid_uuid) is True
     
     def test_validate_uuid_invalid(self):
         """Test UUID validation with invalid UUID."""
+        from tests.utils import TestDataValidator
+        
         invalid_uuid = "not-a-uuid"
         assert TestDataValidator.validate_uuid(invalid_uuid) is False
     
     def test_validate_email_valid(self):
         """Test email validation with valid email."""
+        from tests.utils import TestDataValidator
+        
         valid_email = "test@example.com"
         assert TestDataValidator.validate_email(valid_email) is True
     
     def test_validate_email_invalid(self):
         """Test email validation with invalid email."""
+        from tests.utils import TestDataValidator
+        
         invalid_email = "not-an-email"
         assert TestDataValidator.validate_email(invalid_email) is False
     
     def test_validate_response_structure_valid(self):
         """Test response structure validation with valid data."""
+        from tests.utils import TestDataValidator
+        
         data = {
             "id": "123",
             "name": "Test",
@@ -327,6 +341,8 @@ class TestDataValidator:
     
     def test_validate_response_structure_missing_field(self):
         """Test response structure validation with missing field."""
+        from tests.utils import TestDataValidator
+        
         data = {"id": "123", "name": "Test"}
         required_fields = ["id", "name", "email"]
         
@@ -502,6 +518,8 @@ class TestFrameworkIntegration:
     
     def test_validator_with_factory_data(self):
         """Test validator with factory-generated data."""
+        from tests.utils import TestDataValidator
+        
         user = UserFactory()
         
         # These should not raise
@@ -510,6 +528,8 @@ class TestFrameworkIntegration:
     
     def test_complete_test_scenario(self):
         """Test a complete testing scenario using all components."""
+        from tests.utils import TestDataValidator
+        
         # Create test data
         user = UserFactory()
         post = PostFactory(author_id=user.id)

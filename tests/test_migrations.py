@@ -6,6 +6,7 @@ including upgrade/downgrade cycles and data integrity checks.
 """
 
 import asyncio
+import os
 import pytest
 import subprocess
 import tempfile
@@ -18,23 +19,17 @@ from src.database.models import User, APIKey, UserSession
 from src.config.settings import settings
 
 
+@pytest.mark.asyncio
 class TestMigrations:
     """Test database migrations functionality."""
     
-    @pytest.fixture(autouse=True)
-    async def setup_test_database(self):
+    def setup_method(self):
         """Set up test database for migration tests."""
         # Use a temporary database for testing
         self.test_db_url = "sqlite+aiosqlite:///./test_migrations.db"
-        
-        # Initialize database
-        await init_database(database_url=self.test_db_url, create_tables=False)
-        
-        yield
-        
-        # Cleanup
-        await close_database()
-        
+    
+    def teardown_method(self):
+        """Clean up test database."""
         # Remove test database file
         db_file = Path("./test_migrations.db")
         if db_file.exists():
@@ -53,24 +48,31 @@ class TestMigrations:
         project_root = Path(__file__).parent.parent
         
         # Set environment variable for test database
-        env = {"DATABASE_URL": self.test_db_url}
+        env = {
+            "DATABASE_URL": self.test_db_url,
+            "API_DATABASE_URL": self.test_db_url,
+            "API_ENV": "test",
+            "ENV": "test"
+        }
         
         return subprocess.run(
-            ["alembic"] + command,
+            ["poetry", "run", "alembic"] + command,
             cwd=project_root,
             capture_output=True,
             text=True,
-            env=env
+            env={**os.environ, **env}
         )
     
-    def test_migration_upgrade_to_head(self):
+    async def test_migration_upgrade_to_head(self):
         """Test upgrading to head revision."""
         result = self.run_alembic_command(["upgrade", "head"])
         
         assert result.returncode == 0, f"Migration failed: {result.stderr}"
-        assert "Running upgrade" in result.stdout or "Target database is up to date" in result.stdout
+        # Check for migration success in either stdout or stderr (alembic logs to stderr)
+        output = result.stdout + result.stderr
+        assert "Running upgrade" in output or "Target database is up to date" in output
     
-    def test_migration_current_revision(self):
+    async def test_migration_current_revision(self):
         """Test getting current revision."""
         # First upgrade to head
         self.run_alembic_command(["upgrade", "head"])
@@ -81,7 +83,7 @@ class TestMigrations:
         assert result.returncode == 0, f"Current command failed: {result.stderr}"
         assert result.stdout.strip() != "", "Current revision should not be empty"
     
-    def test_migration_history(self):
+    async def test_migration_history(self):
         """Test getting migration history."""
         result = self.run_alembic_command(["history"])
         
@@ -227,8 +229,12 @@ class TestMigrations:
         assert result.returncode == 0
         # Should be back to the original revision
     
-    def test_migration_autogenerate_detection(self):
+    async def test_migration_autogenerate_detection(self):
         """Test that autogenerate can detect model changes."""
+        # First upgrade to head to ensure database is up to date
+        upgrade_result = self.run_alembic_command(["upgrade", "head"])
+        assert upgrade_result.returncode == 0, f"Upgrade failed: {upgrade_result.stderr}"
+        
         # This test would require modifying models temporarily
         # For now, just test that autogenerate command works
         result = self.run_alembic_command(["revision", "--autogenerate", "-m", "test_autogenerate"])
@@ -304,7 +310,12 @@ class TestMigrationIntegration:
         table_names = {table.name for table in Base.metadata.tables.values()}
         expected_tables = {'user', 'api_key', 'user_session'}
         
-        assert expected_tables.issubset(table_names), "All expected tables should be in metadata"
+        # Debug: print actual table names if assertion fails
+        if not expected_tables.issubset(table_names):
+            print(f"Expected tables: {expected_tables}")
+            print(f"Actual table names: {table_names}")
+        
+        assert expected_tables.issubset(table_names), f"All expected tables should be in metadata. Expected: {expected_tables}, Got: {table_names}"
 
 
 if __name__ == "__main__":

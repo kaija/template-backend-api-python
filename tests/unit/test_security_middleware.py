@@ -282,6 +282,7 @@ class TestTrustedHostMiddleware:
         # Should reject other domains
         response = client.get("/test", headers={"host": "malicious.com"})
         assert response.status_code == 400
+        assert "Invalid host header" in response.json()["detail"]
     
     def test_allow_any_hosts(self):
         """Test allowing any host."""

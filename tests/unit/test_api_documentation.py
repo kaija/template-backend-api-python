@@ -28,6 +28,7 @@ class TestDocumentationConfiguration:
             with patch('src.config.documentation.settings') as mock_settings:
                 mock_settings.docs_require_auth = False
                 mock_settings.docs_api_key = "test-key"
+                mock_settings.docs_allowed_roles = ["admin", "developer"]
                 
                 config = get_docs_access_config()
                 

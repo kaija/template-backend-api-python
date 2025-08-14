@@ -55,7 +55,7 @@ def test_structured_logging():
     )
     
     print("✅ Structured JSON logging working correctly")
-    return True
+    assert True  # Test passed
 
 
 def test_prometheus_metrics():
@@ -90,7 +90,7 @@ def test_prometheus_metrics():
         return False
     
     print(f"✅ Prometheus metrics working correctly ({len(metrics_data)} characters)")
-    return True
+    assert len(metrics_data) > 0  # Ensure metrics data is not empty
 
 
 def test_sentry_integration():
@@ -135,7 +135,7 @@ def test_sentry_integration():
         return False
     
     print("✅ Sentry integration and data sanitization working correctly")
-    return True
+    assert True  # Test passed
 
 
 def test_observability_middleware():
@@ -166,7 +166,7 @@ def test_observability_middleware():
     print(f"✅ Observability middleware working correctly")
     print(f"   - Correlation ID: {response.headers.get('X-Correlation-ID')}")
     print(f"   - Response Time: {response.headers.get('X-Response-Time')}")
-    return True
+    assert response.status_code == 200  # Ensure request was successful
 
 
 def test_metrics_endpoint():
@@ -198,7 +198,7 @@ def test_metrics_endpoint():
         return False
     
     print(f"✅ Metrics endpoint working correctly ({len(response.text)} characters)")
-    return True
+    assert response.status_code == 200 and len(response.text) > 0  # Ensure metrics endpoint works
 
 
 def main():
@@ -247,7 +247,7 @@ def main():
         print("✅ Prometheus metrics endpoint (/metrics) with custom application metrics")
         print("✅ Sentry integration for error tracking with environment tagging and context")
         print("\n🏆 All observability and monitoring requirements implemented!")
-        return True
+        assert passed == total  # All tests should pass
     else:
         print(f"\n⚠️  {total - passed} tests failed. Please review the implementation.")
         return False
