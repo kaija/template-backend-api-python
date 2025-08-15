@@ -1,5 +1,8 @@
 """
-Tests for controller architecture.
+Example tests for controller architecture.
+
+This module demonstrates testing patterns for controllers in the generic
+API framework. These tests can be adapted for your specific domain controllers.
 """
 
 import pytest
@@ -158,8 +161,8 @@ class TestUserController:
             user_data = UserCreate(
                 username=f"testuser{i}",
                 email=f"test{i}@example.com",
-                full_name=f"Test User {i}",
-                password="testpassword123"
+                full_name="Test User",  # Use valid name without numbers
+                password="TestPassword123!"  # Meet password requirements
             )
             await user_controller.create(user_data)
         
@@ -181,8 +184,8 @@ class TestUserController:
             user_data = UserCreate(
                 username=f"testuser{i}",
                 email=f"test{i}@example.com",
-                full_name=f"Test User {i}",
-                password="testpassword123"
+                full_name="Test User",  # Use valid name without numbers
+                password="TestPassword123!"  # Meet password requirements
             )
             await user_controller.create(user_data)
         
@@ -257,31 +260,17 @@ class TestUserController:
         assert retrieved_user.id == created_user.id
         assert retrieved_user.email == sample_user_data.email
     
-    @pytest.mark.asyncio
-    async def test_activate_deactivate_user(self, user_controller, sample_user_data):
-        """Test user activation and deactivation."""
-        # Create user
-        created_user = await user_controller.create(sample_user_data)
-        assert created_user.is_active is True
-        
-        # Deactivate user
-        deactivated_user = await user_controller.deactivate_user(created_user.id)
-        assert deactivated_user is not None
-        assert deactivated_user.is_active is False
-        
-        # Activate user
-        activated_user = await user_controller.activate_user(created_user.id)
-        assert activated_user is not None
-        assert activated_user.is_active is True
+    # Note: activate/deactivate methods were removed in the generic version
+    # This demonstrates how to adapt tests when refactoring to be more generic
     
     @pytest.mark.asyncio
     async def test_search_users(self, user_controller):
         """Test user search functionality."""
         # Create users with different names
         users_data = [
-            UserCreate(username="john_doe", email="john@example.com", full_name="John Doe", password="pass123"),
-            UserCreate(username="jane_smith", email="jane@example.com", full_name="Jane Smith", password="pass123"),
-            UserCreate(username="bob_johnson", email="bob@example.com", full_name="Bob Johnson", password="pass123"),
+            UserCreate(username="johndoe", email="john@example.com", full_name="John Doe", password="TestPassword123!"),
+            UserCreate(username="janesmith", email="jane@example.com", full_name="Jane Smith", password="TestPassword123!"),
+            UserCreate(username="bobjohnson", email="bob@example.com", full_name="Bob Johnson", password="TestPassword123!"),
         ]
         
         for user_data in users_data:
@@ -289,9 +278,9 @@ class TestUserController:
         
         # Search for "john"
         result = await user_controller.get_all(filters={"search": "john"})
-        assert len(result["items"]) == 2  # john_doe and bob_johnson
+        assert len(result["items"]) == 2  # johndoe and bobjohnson
         
         # Search for "jane"
         result = await user_controller.get_all(filters={"search": "jane"})
         assert len(result["items"]) == 1
-        assert result["items"][0].username == "jane_smith"
+        assert result["items"][0].username == "janesmith"

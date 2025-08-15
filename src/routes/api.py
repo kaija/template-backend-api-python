@@ -51,7 +51,7 @@ router.include_router(
             "content": {
                 "application/json": {
                     "example": {
-                        "message": "Production API Framework",
+                        "message": "Generic API Framework",
                         "version": "1.0.0",
                         "environment": "production",
                         "api_versions": ["v1"],
@@ -86,7 +86,7 @@ async def api_root():
     env = getattr(settings, "env", "development")
 
     return {
-        "message": "Production API Framework",
+        "message": "Generic API Framework",
         "version": getattr(settings, "version", "0.1.0"),
         "environment": env,
         "api_versions": ["v1"],
@@ -95,28 +95,21 @@ async def api_root():
         "openapi_url": "/openapi.json",
         "health_url": getattr(settings, "health_check_path", "/healthz"),
         "readiness_url": getattr(settings, "readiness_check_path", "/readyz"),
-        "metrics_url": "/metrics",
         "authentication": {
-            "methods": ["JWT", "API Key", "OAuth2"],
+            "methods": ["JWT", "API Key"],
             "login_url": f"{api_prefix}/v1/auth/login",
-            "register_url": f"{api_prefix}/v1/auth/register",
-            "refresh_url": f"{api_prefix}/v1/auth/refresh"
         },
         "features": [
-            "User management",
-            "Authentication & authorization",
-            "Role-based access control",
-            "Rate limiting",
+            "Example user management",
+            "Basic authentication",
             "Request/response validation",
-            "Comprehensive error handling",
-            "Audit logging",
-            "Observability & monitoring",
+            "Error handling",
             "Health checks",
             "API documentation"
         ],
-        "rate_limiting": {
-            "default_limit": getattr(settings, "rate_limit_requests", 100),
-            "window_minutes": getattr(settings, "rate_limit_window", 60) // 60,
-            "authenticated_limit": getattr(settings, "rate_limit_requests_authenticated", 1000)
+        "example_endpoints": {
+            "users": f"{api_prefix}/v1/users",
+            "health": "/healthz",
+            "docs": "/docs"
         }
     }

@@ -1,11 +1,12 @@
 """
-User controller with CRUD operations.
+Example User controller demonstrating CRUD operations.
 
-This module provides user management functionality using the base controller pattern.
+This module serves as a template for implementing domain-specific controllers.
+It shows common patterns for CRUD operations using the base controller.
 """
 
-from typing import Optional, Dict, Any, List
-from datetime import datetime
+from typing import Optional, Dict, Any
+from datetime import datetime, timezone
 
 from src.controllers.base import CRUDController
 from src.schemas.users import User, UserCreate, UserUpdate
@@ -13,38 +14,34 @@ from src.schemas.users import User, UserCreate, UserUpdate
 
 class UserController(CRUDController[User, UserCreate, UserUpdate]):
     """
-    User controller implementing CRUD operations.
+    Example User controller implementing basic CRUD operations.
 
-    This controller manages user-related operations including
-    creation, retrieval, updating, and deletion of users.
+    This serves as a template for building domain-specific controllers.
+    Shows how to extend the base CRUDController with concrete implementations.
     """
 
     def __init__(self):
         """Initialize the user controller."""
         super().__init__(User)
-        self._users_db: Dict[str, Dict[str, Any]] = {}  # In-memory storage for demo
+        # In-memory storage for demonstration purposes
+        # In a real application, this would use a service layer
+        self._users_db: Dict[str, Dict[str, Any]] = {}
 
     async def create(self, data: UserCreate) -> User:
         """
         Create a new user.
 
-        Args:
-            data: User creation data
-
-        Returns:
-            Created user
-
-        Raises:
-            ValueError: If user already exists
+        Example implementation showing basic creation logic.
+        In a real application, this would delegate to a service layer.
         """
         self._log_request("POST", "/users")
 
         try:
-            # Check if user already exists
+            # Basic duplicate check
             if any(user.get("email") == data.email for user in self._users_db.values()):
                 raise ValueError(f"User with email {data.email} already exists")
 
-            # Generate user ID
+            # Generate simple ID
             user_id = f"user_{len(self._users_db) + 1}"
 
             # Create user data
@@ -54,16 +51,16 @@ class UserController(CRUDController[User, UserCreate, UserUpdate]):
                 "email": data.email,
                 "full_name": data.full_name,
                 "is_active": True,
-                "created_at": datetime.utcnow(),
-                "updated_at": datetime.utcnow(),
+                "login_count": 0,
+                "created_at": datetime.now(timezone.utc),
+                "updated_at": datetime.now(timezone.utc),
             }
 
-            # Store user
+            # Store in memory (demo only)
             self._users_db[user_id] = user_data
 
-            # Create user model
+            # Return user model
             user = User(**user_data)
-
             self._log_response("POST", "/users", 201, user_id=user_id)
             return user
 
@@ -74,11 +71,7 @@ class UserController(CRUDController[User, UserCreate, UserUpdate]):
         """
         Get a user by ID.
 
-        Args:
-            resource_id: User ID
-
-        Returns:
-            User if found, None otherwise
+        Example implementation showing basic retrieval logic.
         """
         self._log_request("GET", f"/users/{resource_id}")
 
@@ -104,21 +97,17 @@ class UserController(CRUDController[User, UserCreate, UserUpdate]):
         """
         Get all users with pagination and filtering.
 
-        Args:
-            skip: Number of records to skip
-            limit: Maximum number of records to return
-            filters: Optional filters to apply
-
-        Returns:
-            Dictionary with users and pagination info
+        Example implementation showing pagination and basic filtering patterns.
         """
         self._log_request("GET", "/users", skip=skip, limit=limit)
 
         try:
             self._validate_pagination(skip, limit)
 
-            # Apply filters if provided
+            # Get all users
             users_data = list(self._users_db.values())
+
+            # Apply simple filters (example pattern)
             if filters:
                 if "is_active" in filters:
                     users_data = [u for u in users_data if u.get("is_active") == filters["is_active"]]
@@ -128,19 +117,17 @@ class UserController(CRUDController[User, UserCreate, UserUpdate]):
                         u for u in users_data
                         if search_term in u.get("username", "").lower()
                         or search_term in u.get("email", "").lower()
-                        or search_term in u.get("full_name", "").lower()
                     ]
 
             # Apply pagination
             total = len(users_data)
             paginated_data = users_data[skip:skip + limit]
 
-            # Convert to User models
+            # Convert to models
             users = [User(**user_data) for user_data in paginated_data]
 
-            # Create paginated response
+            # Create response
             response = self._create_paginated_response(users, total, skip, limit)
-
             self._log_response("GET", "/users", 200, total=total, returned=len(users))
             return response
 
@@ -151,12 +138,7 @@ class UserController(CRUDController[User, UserCreate, UserUpdate]):
         """
         Update a user.
 
-        Args:
-            resource_id: User ID
-            data: User update data
-
-        Returns:
-            Updated user if found, None otherwise
+        Example implementation showing basic update logic.
         """
         self._log_request("PUT", f"/users/{resource_id}")
 
@@ -166,14 +148,13 @@ class UserController(CRUDController[User, UserCreate, UserUpdate]):
                 self._log_response("PUT", f"/users/{resource_id}", 404)
                 return None
 
-            # Update user data
-            update_dict = data.dict(exclude_unset=True)
+            # Update with provided data
+            update_dict = data.model_dump(exclude_unset=True)
             user_data.update(update_dict)
-            user_data["updated_at"] = datetime.utcnow()
+            user_data["updated_at"] = datetime.now(timezone.utc)
 
-            # Create updated user model
+            # Return updated user
             user = User(**user_data)
-
             self._log_response("PUT", f"/users/{resource_id}", 200)
             return user
 
@@ -184,11 +165,7 @@ class UserController(CRUDController[User, UserCreate, UserUpdate]):
         """
         Delete a user.
 
-        Args:
-            resource_id: User ID
-
-        Returns:
-            True if deleted, False if not found
+        Example implementation showing basic deletion logic.
         """
         self._log_request("DELETE", f"/users/{resource_id}")
 
@@ -198,22 +175,19 @@ class UserController(CRUDController[User, UserCreate, UserUpdate]):
                 return False
 
             del self._users_db[resource_id]
-
             self._log_response("DELETE", f"/users/{resource_id}", 204)
             return True
 
         except Exception as e:
             raise self._handle_error(e, f"delete_user_{resource_id}")
 
+    # Additional methods showing common patterns
+
     async def get_by_email(self, email: str) -> Optional[User]:
         """
         Get a user by email address.
 
-        Args:
-            email: User email address
-
-        Returns:
-            User if found, None otherwise
+        Example of a custom query method beyond basic CRUD.
         """
         self._log_request("GET", f"/users/by-email/{email}")
 
@@ -229,59 +203,3 @@ class UserController(CRUDController[User, UserCreate, UserUpdate]):
 
         except Exception as e:
             raise self._handle_error(e, f"get_user_by_email_{email}")
-
-    async def activate_user(self, resource_id: str) -> Optional[User]:
-        """
-        Activate a user account.
-
-        Args:
-            resource_id: User ID
-
-        Returns:
-            Updated user if found, None otherwise
-        """
-        self._log_request("POST", f"/users/{resource_id}/activate")
-
-        try:
-            user_data = self._users_db.get(resource_id)
-            if not user_data:
-                self._log_response("POST", f"/users/{resource_id}/activate", 404)
-                return None
-
-            user_data["is_active"] = True
-            user_data["updated_at"] = datetime.utcnow()
-
-            user = User(**user_data)
-            self._log_response("POST", f"/users/{resource_id}/activate", 200)
-            return user
-
-        except Exception as e:
-            raise self._handle_error(e, f"activate_user_{resource_id}")
-
-    async def deactivate_user(self, resource_id: str) -> Optional[User]:
-        """
-        Deactivate a user account.
-
-        Args:
-            resource_id: User ID
-
-        Returns:
-            Updated user if found, None otherwise
-        """
-        self._log_request("POST", f"/users/{resource_id}/deactivate")
-
-        try:
-            user_data = self._users_db.get(resource_id)
-            if not user_data:
-                self._log_response("POST", f"/users/{resource_id}/deactivate", 404)
-                return None
-
-            user_data["is_active"] = False
-            user_data["updated_at"] = datetime.utcnow()
-
-            user = User(**user_data)
-            self._log_response("POST", f"/users/{resource_id}/deactivate", 200)
-            return user
-
-        except Exception as e:
-            raise self._handle_error(e, f"deactivate_user_{resource_id}")

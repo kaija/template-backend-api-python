@@ -1,8 +1,9 @@
 """
-User Pydantic schemas for request/response validation.
+Example User Pydantic schemas for request/response validation.
 
-This module defines the Pydantic models used for user-related
-API requests and responses with comprehensive validation.
+This module demonstrates Pydantic models for user-related API requests
+and responses. These serve as examples that can be adapted for your
+specific domain models and validation requirements.
 """
 
 from datetime import datetime
@@ -22,7 +23,7 @@ from src.schemas.base import (
 
 
 class UserBase(BaseSchema):
-    """Base user schema with common fields and validation."""
+    """Base user schema demonstrating common validation patterns."""
 
     username: str = create_string_field(
         description="Username (3-50 characters, alphanumeric, underscore, hyphen only)",
@@ -93,7 +94,7 @@ class UserBase(BaseSchema):
 
 
 class UserCreate(UserBase):
-    """Schema for creating a new user with comprehensive password validation."""
+    """Example schema for creating a new user with password validation patterns."""
 
     password: str = Field(
         ...,
@@ -171,7 +172,7 @@ class UserCreate(UserBase):
 
 
 class UserUpdate(BaseSchema):
-    """Schema for updating an existing user with partial validation."""
+    """Example schema for updating users, demonstrating partial validation patterns."""
 
     username: Optional[str] = create_optional_string_field(
         description="Username (3-50 characters, alphanumeric, underscore, hyphen only)",
@@ -226,7 +227,7 @@ class UserUpdate(BaseSchema):
 
 
 class User(UserBase, IdentifierMixin, TimestampMixin):
-    """Schema for user responses with full user information."""
+    """Example response schema demonstrating how to combine mixins."""
 
     is_active: bool = Field(
         default=True,
@@ -264,7 +265,7 @@ class User(UserBase, IdentifierMixin, TimestampMixin):
 
 
 class UserList(PaginatedResponse[User]):
-    """Schema for paginated user list responses."""
+    """Example paginated response schema."""
 
     model_config = ConfigDict(
         json_schema_extra={
@@ -297,7 +298,7 @@ class UserList(PaginatedResponse[User]):
 
 
 class UserFilters(BaseSchema):
-    """Schema for user filtering parameters with comprehensive validation."""
+    """Example filtering schema demonstrating query parameter validation."""
 
     is_active: Optional[bool] = Field(
         default=None,
@@ -362,7 +363,7 @@ class UserFilters(BaseSchema):
 
 
 class UserPasswordChange(BaseSchema):
-    """Schema for changing user password."""
+    """Example schema for password change operations."""
 
     current_password: str = Field(
         ...,
@@ -412,7 +413,7 @@ class UserPasswordChange(BaseSchema):
 
 
 class UserSummary(BaseSchema):
-    """Schema for user summary information (minimal user data)."""
+    """Example minimal response schema for summary information."""
 
     id: str = Field(
         ...,

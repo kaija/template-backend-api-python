@@ -177,7 +177,7 @@ def get_custom_openapi_schema(app) -> Dict[str, Any]:
     }
 
     # Add comprehensive API information
-    openapi_schema["info"]["x-api-id"] = "production-api-framework"
+    openapi_schema["info"]["x-api-id"] = "generic-api-framework"
     openapi_schema["info"]["x-audience"] = "developers"
     openapi_schema["info"]["x-maturity"] = "stable"
     openapi_schema["info"]["x-category"] = "backend-api"

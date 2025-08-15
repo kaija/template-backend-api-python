@@ -1,9 +1,9 @@
 """
-Test data factories for creating test objects.
+Generic test data factories for creating test objects.
 
-This module provides factory classes for creating test data objects
-using factory_boy. These factories ensure consistent and reproducible
-test data across all tests.
+This module provides example factory classes using factory_boy that demonstrate
+common patterns for creating test data. These can be adapted for your specific
+domain models and testing needs.
 """
 
 import factory

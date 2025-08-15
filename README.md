@@ -1,18 +1,19 @@
-# Production API Framework
+# Generic API Framework
 
-A production-ready backend API framework built with FastAPI, featuring comprehensive configuration management, security, monitoring, and testing capabilities.
+A flexible, production-ready backend API framework built with FastAPI. This framework serves as a foundation for building various types of applications, providing essential infrastructure components and patterns that can be adapted to different domains.
 
 ## Features
 
-- **FastAPI Framework**: Modern, fast web framework for building APIs with automatic OpenAPI documentation
+- **FastAPI Framework**: Modern, fast web framework with automatic OpenAPI documentation
+- **Generic Architecture**: Flexible patterns that can be adapted to any domain
 - **Configuration Management**: Hierarchical configuration with Dynaconf supporting multiple environments
-- **Security**: JWT authentication, RBAC, CORS, security headers, and audit logging
-- **Database**: SQLAlchemy 2.x with async support, connection pooling, and Alembic migrations
-- **Monitoring**: Structured JSON logging, Prometheus metrics, Sentry integration, and health checks
-- **Testing**: Comprehensive test suite with pytest, fixtures, and 80%+ coverage target
+- **Database Layer**: SQLAlchemy 2.x with async support, connection pooling, and Alembic migrations
+- **Example Models**: User and Post models demonstrating common patterns and relationships
+- **Testing Framework**: Comprehensive test suite with pytest, fixtures, and example test patterns
 - **Code Quality**: Black, isort, flake8, mypy, and pre-commit hooks
-- **Containerization**: Docker support with multi-stage builds and docker-compose for local development
-- **Deployment**: Production-ready with graceful shutdown, health checks, and environment-based configuration
+- **Containerization**: Docker support with multi-stage builds and docker-compose
+- **Production Ready**: Health checks, graceful shutdown, and environment-based configuration
+- **Extensible**: Clear patterns for adding your own domain-specific functionality
 
 ## Documentation
 
@@ -51,7 +52,7 @@ A production-ready backend API framework built with FastAPI, featuring comprehen
 1. **Clone the repository**:
 ```bash
 git clone <repository-url>
-cd production-api-framework
+cd generic-api-framework
 ```
 
 2. **Install Poetry** (if not already installed):
@@ -118,7 +119,7 @@ Key variables to configure:
 API_ENV=development  # development, staging, production
 
 # Database Configuration
-API_DATABASE_URL=postgresql+asyncpg://user:password@localhost:5432/dbname
+API_DATABASE_URL=postgresql+asyncpg://user:password@localhost:5432/your_app_db
 
 # Security
 API_SECRET_KEY=your-super-secret-key-here
@@ -129,9 +130,8 @@ API_JWT_EXPIRE_MINUTES=30
 API_REDIS_URL=redis://localhost:6379/0
 API_SENTRY_DSN=https://your-sentry-dsn@sentry.io/project-id
 
-# Feature Flags
-API_FEATURE_REGISTRATION_ENABLED=true
-API_FEATURE_EMAIL_VERIFICATION=false
+# Feature Flags - customize for your application
+API_FEATURE_EXAMPLE_ENABLED=true
 ```
 
 #### Setting up secrets (Production)
@@ -171,15 +171,15 @@ sudo systemctl start postgresql
 
 # Create database and user
 sudo -u postgres psql
-CREATE DATABASE api_framework;
-CREATE USER api_user WITH PASSWORD 'your_password';
-GRANT ALL PRIVILEGES ON DATABASE api_framework TO api_user;
+CREATE DATABASE your_app_db;
+CREATE USER app_user WITH PASSWORD 'your_password';
+GRANT ALL PRIVILEGES ON DATABASE your_app_db TO app_user;
 \q
 ```
 
 2. **Update database URL in .env**:
 ```bash
-API_DATABASE_URL=postgresql+asyncpg://api_user:your_password@localhost:5432/api_framework
+API_DATABASE_URL=postgresql+asyncpg://app_user:your_password@localhost:5432/your_app_db
 ```
 
 #### SQLite Setup (Development)
@@ -825,6 +825,101 @@ echo 'debug = true' >> config/environments/development.toml
 ├── pytest.ini                   # Pytest configuration
 ├── alembic.ini                   # Alembic configuration
 └── README.md                     # This file
+```
+
+## Extending the Framework
+
+This framework provides a foundation that you can extend for your specific application needs:
+
+### Adding New Models
+
+1. **Create your model** in `src/database/models.py`:
+```python
+class YourModel(Base, SoftDeleteMixin, AuditMixin):
+    """Your domain-specific model."""
+    
+    name: Mapped[str] = mapped_column(String(100), nullable=False)
+    description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    # Add your specific fields here
+```
+
+2. **Create a migration**:
+```bash
+poetry run alembic revision --autogenerate -m "Add YourModel"
+poetry run alembic upgrade head
+```
+
+### Adding New Endpoints
+
+1. **Create a controller** in `src/controllers/`:
+```python
+class YourController(CRUDController):
+    """Controller for your domain."""
+    
+    async def create(self, data: YourCreateSchema) -> YourResponseSchema:
+        # Implement your business logic
+        pass
+```
+
+2. **Create schemas** in `src/schemas/`:
+```python
+class YourCreateSchema(BaseModel):
+    name: str
+    description: Optional[str] = None
+
+class YourResponseSchema(BaseModel):
+    id: str
+    name: str
+    description: Optional[str]
+    created_at: datetime
+```
+
+3. **Add routes** in `src/routes/v1/`:
+```python
+@router.post("/your-resource", response_model=YourResponseSchema)
+async def create_resource(data: YourCreateSchema):
+    controller = YourController()
+    return await controller.create(data)
+```
+
+### Customizing Configuration
+
+1. **Add your settings** to `config/settings.toml`:
+```toml
+# Your application settings
+your_service_url = "https://api.example.com"
+your_feature_enabled = true
+```
+
+2. **Use in your code**:
+```python
+from src.config.settings import settings
+
+if settings.your_feature_enabled:
+    # Your feature logic
+    pass
+```
+
+### Adding Business Logic
+
+1. **Create services** in `src/services/`:
+```python
+class YourService(BaseService):
+    """Business logic for your domain."""
+    
+    async def complex_business_operation(self, data):
+        # Implement your business rules
+        pass
+```
+
+2. **Use dependency injection**:
+```python
+@router.post("/complex-operation")
+async def complex_operation(
+    data: YourSchema,
+    service: YourService = Depends(get_your_service)
+):
+    return await service.complex_business_operation(data)
 ```
 
 ## Additional Resources

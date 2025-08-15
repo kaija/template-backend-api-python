@@ -13,7 +13,7 @@ from datetime import datetime, timezone
 from fastapi import HTTPException, status
 from pydantic import BaseModel
 
-from src.config import settings
+from src.config.settings import settings
 
 
 # Type variables for generic controllers
@@ -354,7 +354,7 @@ class HealthController(BaseController):
                     "process_id": os.getpid(),
                 },
                 "application": {
-                    "name": getattr(settings, "app_name", "Production API Framework"),
+                    "name": getattr(settings, "app_name", "Generic API Framework"),
                     "debug_mode": getattr(settings, "debug", False),
                     "log_level": getattr(settings, "log_level", "INFO"),
                 }
@@ -653,11 +653,12 @@ class HealthController(BaseController):
         try:
             # Try to import redis and create a connection
             import redis.asyncio as redis
-            from src.config import get_redis_url
+            from src.config.settings import settings
 
             # Create Redis client
+            redis_url = getattr(settings, "redis_url", "redis://localhost:6379/0")
             redis_client = redis.from_url(
-                get_redis_url(),
+                redis_url,
                 encoding="utf-8",
                 decode_responses=True,
                 socket_connect_timeout=5,

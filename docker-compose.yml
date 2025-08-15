@@ -13,7 +13,7 @@ services:
     environment:
       - ENV_FOR_DYNACONF=development
       - API_ENV=development
-      - API_DATABASE_URL=postgresql+asyncpg://api_user:api_password@postgres:5432/api_db
+      - API_DATABASE_URL=postgresql+asyncpg://app_user:app_password@postgres:5432/your_app_db
       - API_REDIS_URL=redis://redis:6379/0
       - API_SECRET_KEY=docker-development-secret-key-change-this-in-production
       - API_SENTRY_DSN=${SENTRY_DSN:-}
@@ -41,9 +41,9 @@ services:
   postgres:
     image: postgres:15-alpine
     environment:
-      POSTGRES_DB: api_db
-      POSTGRES_USER: api_user
-      POSTGRES_PASSWORD: api_password
+      POSTGRES_DB: your_app_db
+      POSTGRES_USER: app_user
+      POSTGRES_PASSWORD: app_password
       POSTGRES_INITDB_ARGS: "--encoding=UTF-8"
     ports:
       - "5432:5432"
@@ -54,7 +54,7 @@ services:
       - api-network
     restart: unless-stopped
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U api_user -d api_db"]
+      test: ["CMD-SHELL", "pg_isready -U app_user -d your_app_db"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -87,10 +87,10 @@ services:
     environment:
       - ENV_FOR_DYNACONF=development
       - API_ENV=development
-      - API_DATABASE_URL=postgresql+asyncpg://api_user:api_password@postgres:5432/api_db
+      - API_DATABASE_URL=postgresql+asyncpg://app_user:app_password@postgres:5432/your_app_db
       - API_REDIS_URL=redis://redis:6379/0
       - API_SECRET_KEY=docker-development-secret-key-change-this-in-production
-      - DATABASE_URL=postgresql+asyncpg://api_user:api_password@postgres:5432/api_db
+      - DATABASE_URL=postgresql+asyncpg://app_user:app_password@postgres:5432/your_app_db
     volumes:
       - ./migrations:/app/migrations
       - ./alembic.ini:/app/alembic.ini

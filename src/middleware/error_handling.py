@@ -212,8 +212,17 @@ class ErrorHandlingMiddleware(BaseHTTPMiddleware):
             JSON error response
         """
         # Determine error details based on environment
-        if is_development():
-            # In development, include full error details
+        # Check if we're in development or test environment
+        try:
+            from src.config.settings import get_environment
+            current_env = get_environment()
+            is_dev_or_test = current_env in ["development", "test"]
+        except Exception:
+            # Fallback to development behavior for tests
+            is_dev_or_test = True
+            
+        if is_dev_or_test:
+            # In development/test, include full error details
             error_details = self._get_development_error_details(exc)
             message = str(exc) if str(exc) else "An unexpected error occurred"
         else:

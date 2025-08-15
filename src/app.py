@@ -305,13 +305,22 @@ def create_app(environment: str = None) -> FastAPI:
     }
 
     # Environment-specific configuration
-    # Disable default docs URLs - we'll use custom ones with access control
-    app_config.update({
-        "debug": is_development(),
-        "docs_url": None,  # Disable default docs
-        "redoc_url": None,  # Disable default redoc
-        "openapi_url": None,  # Disable default openapi
-    })
+    if is_production():
+        # Disable docs in production
+        app_config.update({
+            "debug": False,
+            "docs_url": None,
+            "redoc_url": None,
+            "openapi_url": None,
+        })
+    else:
+        # Enable docs in development and test
+        app_config.update({
+            "debug": is_development(),
+            "docs_url": "/docs",
+            "redoc_url": "/redoc",
+            "openapi_url": "/openapi.json",
+        })
 
     app = FastAPI(**app_config)
 

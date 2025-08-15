@@ -45,7 +45,7 @@ Configuration is loaded in the following order (later sources override earlier o
 1. **Clone the repository**:
 ```bash
 git clone <repository-url>
-cd production-api-framework
+cd generic-api-framework
 ```
 
 2. **Install Poetry** (if not already installed):

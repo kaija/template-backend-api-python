@@ -1,7 +1,7 @@
 [tool.poetry]
-name = "production-api-framework"
+name = "generic-api-framework"
 version = "0.1.0"
-description = "Production-ready backend API framework using FastAPI"
+description = "Generic backend API framework foundation using FastAPI - a starting point for building various applications"
 authors = ["Your Name <your.email@example.com>"]
 readme = "README.md"
 packages = [{include = "src"}]

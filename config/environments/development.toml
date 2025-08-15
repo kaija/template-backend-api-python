@@ -10,7 +10,7 @@ host = "127.0.0.1"
 port = 8000
 
 # Development database (override in .env or .secrets.toml)
-database_url = "postgresql+asyncpg://postgres:password@localhost:5432/api_dev"
+database_url = "postgresql+asyncpg://postgres:password@localhost:5432/your_app_dev"
 
 # Development Redis
 redis_url = "redis://localhost:6379/0"
@@ -35,9 +35,8 @@ observability_track_performance = true
 # Development structured logging
 mask_sensitive_logs = false  # Allow more detailed logs in development
 
-# Development features
-feature_registration_enabled = true
-feature_email_verification = false
+# Development features - customize for your application
+feature_example_enabled = true
 
 # Development documentation settings
 docs_enabled_in_production = true

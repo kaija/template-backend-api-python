@@ -100,13 +100,13 @@ def configure_sentry() -> None:
         )
 
         # Set global tags
-        sentry_sdk.set_tag("service", getattr(settings, "app_name", "production-api-framework"))
+        sentry_sdk.set_tag("service", getattr(settings, "app_name", "generic-api-framework"))
         sentry_sdk.set_tag("version", getattr(settings, "version", "0.1.0"))
         sentry_sdk.set_tag("environment", getattr(settings, "env", "development"))
 
         # Set global context
         sentry_sdk.set_context("app", {
-            "name": getattr(settings, "app_name", "production-api-framework"),
+            "name": getattr(settings, "app_name", "generic-api-framework"),
             "version": getattr(settings, "version", "0.1.0"),
             "environment": getattr(settings, "env", "development"),
         })

@@ -9,15 +9,12 @@ from fastapi import APIRouter
 
 from src.config import settings
 from src.routes.v1 import users
-from src.routes.v1.auth import router as auth_router
-
 # Create API v1 router
 router = APIRouter(
     tags=["v1"],
 )
 
-# Include sub-routers
-router.include_router(auth_router)
+# Include sub-routers - example endpoints
 router.include_router(users.router)
 
 
@@ -98,34 +95,24 @@ async def api_v1_root():
         "version": "1.0",
         "status": "stable",
         "endpoints": {
-            "auth": "/api/v1/auth",
             "users": "/api/v1/users",
             "health": "/healthz",
-            "readiness": "/readyz",
-            "metrics": "/metrics"
+            "readiness": "/readyz"
         },
         "features": [
-            "user_management",
-            "authentication",
-            "authorization",
+            "example_user_management",
+            "basic_authentication",
             "request_validation",
             "response_formatting",
             "error_handling",
-            "rate_limiting",
-            "audit_logging",
-            "request_tracing",
             "health_checks"
         ],
-        "authentication_methods": ["JWT", "API_KEY", "OAUTH2"],
+        "authentication_methods": ["JWT"],
         "supported_operations": ["CREATE", "READ", "UPDATE", "DELETE"],
         "pagination_support": True,
         "filtering_support": True,
         "sorting_support": True,
-        "rate_limiting": {
-            "enabled": True,
-            "default_limit": getattr(settings, "rate_limit_requests", 100),
-            "authenticated_limit": getattr(settings, "rate_limit_requests_authenticated", 1000)
-        }
+        "note": "This is a generic API framework template - extend with your domain-specific endpoints"
     }
 
 

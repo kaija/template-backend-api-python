@@ -15,7 +15,7 @@ from sqlalchemy import text
 from sqlalchemy.ext.asyncio import create_async_engine
 
 from src.database.config import get_session, init_database, close_database
-from src.database.models import User, APIKey, UserSession
+from src.database.models import User, Post
 from src.config.settings import settings
 
 
@@ -107,17 +107,11 @@ class TestMigrations:
             ))
             assert result.fetchone() is not None, "User table should exist"
             
-            # Check api_key table
+            # Check post table
             result = await conn.execute(text(
-                "SELECT name FROM sqlite_master WHERE type='table' AND name='api_key'"
+                "SELECT name FROM sqlite_master WHERE type='table' AND name='post'"
             ))
-            assert result.fetchone() is not None, "API key table should exist"
-            
-            # Check user_session table
-            result = await conn.execute(text(
-                "SELECT name FROM sqlite_master WHERE type='table' AND name='user_session'"
-            ))
-            assert result.fetchone() is not None, "User session table should exist"
+            assert result.fetchone() is not None, "Post table should exist"
         
         await engine.dispose()
     
@@ -136,23 +130,23 @@ class TestMigrations:
             
             expected_columns = {
                 'id', 'created_at', 'updated_at', 'username', 'email',
-                'hashed_password', 'status', 'role', 'is_active'
+                'hashed_password', 'status', 'is_active'
             }
             
             for col in expected_columns:
                 assert col in columns, f"Column {col} should exist in user table"
             
-            # Check api_key table columns
-            result = await conn.execute(text("PRAGMA table_info(api_key)"))
+            # Check post table columns
+            result = await conn.execute(text("PRAGMA table_info(post)"))
             columns = {row[1]: row[2] for row in result.fetchall()}
             
             expected_columns = {
-                'id', 'created_at', 'updated_at', 'name', 'key_hash',
-                'key_prefix', 'status', 'user_id'
+                'id', 'created_at', 'updated_at', 'title', 'content',
+                'is_published', 'author_id'
             }
             
             for col in expected_columns:
-                assert col in columns, f"Column {col} should exist in api_key table"
+                assert col in columns, f"Column {col} should exist in post table"
         
         await engine.dispose()
     
@@ -168,14 +162,14 @@ class TestMigrations:
         async with engine.connect() as conn:
             # Insert a test user
             await conn.execute(text("""
-                INSERT INTO user (id, username, email, hashed_password, status, role, is_active, is_verified, failed_login_attempts, is_deleted)
-                VALUES ('test-user-id', 'testuser', 'test@example.com', 'hashed_password', 'ACTIVE', 'USER', 1, 0, 0, 0)
+                INSERT INTO user (id, username, email, hashed_password, status, is_active, is_deleted)
+                VALUES ('test-user-id', 'testuser', 'test@example.com', 'hashed_password', 'active', 1, 0)
             """))
             
-            # Insert a test API key
+            # Insert a test post
             await conn.execute(text("""
-                INSERT INTO api_key (id, name, key_hash, key_prefix, status, user_id, usage_count, is_deleted)
-                VALUES ('test-key-id', 'Test Key', 'hashed_key', 'test_', 'ACTIVE', 'test-user-id', 0, 0)
+                INSERT INTO post (id, title, content, is_published, author_id, is_deleted)
+                VALUES ('test-post-id', 'Test Post', 'Test content', 0, 'test-user-id', 0)
             """))
             
             await conn.commit()
@@ -184,19 +178,19 @@ class TestMigrations:
             result = await conn.execute(text("SELECT COUNT(*) FROM user"))
             assert result.scalar() == 1, "User should be inserted"
             
-            result = await conn.execute(text("SELECT COUNT(*) FROM api_key"))
-            assert result.scalar() == 1, "API key should be inserted"
+            result = await conn.execute(text("SELECT COUNT(*) FROM post"))
+            assert result.scalar() == 1, "Post should be inserted"
             
             # Verify foreign key relationship
             result = await conn.execute(text("""
-                SELECT u.username, a.name 
+                SELECT u.username, p.title 
                 FROM user u 
-                JOIN api_key a ON u.id = a.user_id
+                JOIN post p ON u.id = p.author_id
             """))
             row = result.fetchone()
             assert row is not None, "Foreign key relationship should work"
             assert row[0] == 'testuser', "Username should match"
-            assert row[1] == 'Test Key', "API key name should match"
+            assert row[1] == 'Test Post', "Post title should match"
         
         await engine.dispose()
     
@@ -260,8 +254,8 @@ class TestMigrations:
         
         async with engine.connect() as conn:
             await conn.execute(text("""
-                INSERT INTO user (id, username, email, hashed_password, status, role, is_active, is_verified, failed_login_attempts, is_deleted)
-                VALUES ('rollback-test', 'rollbackuser', 'rollback@example.com', 'hashed', 'ACTIVE', 'USER', 1, 0, 0, 0)
+                INSERT INTO user (id, username, email, hashed_password, status, is_active, is_deleted)
+                VALUES ('rollback-test', 'rollbackuser', 'rollback@example.com', 'hashed', 'active', 1, 0)
             """))
             await conn.commit()
             
@@ -298,17 +292,16 @@ class TestMigrationIntegration:
         # For now, we'll just verify that models can be imported
         # and are compatible with the migration
         
-        from src.database.models import User, APIKey, UserSession
+        from src.database.models import User, Post
         from src.database.base import Base
         
         # Verify models have the expected attributes
         assert hasattr(User, '__tablename__')
-        assert hasattr(APIKey, '__tablename__')
-        assert hasattr(UserSession, '__tablename__')
+        assert hasattr(Post, '__tablename__')
         
         # Verify base metadata includes all models
         table_names = {table.name for table in Base.metadata.tables.values()}
-        expected_tables = {'user', 'api_key', 'user_session'}
+        expected_tables = {'user', 'post'}
         
         # Debug: print actual table names if assertion fails
         if not expected_tables.issubset(table_names):

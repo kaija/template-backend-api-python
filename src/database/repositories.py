@@ -15,7 +15,7 @@ from sqlalchemy.orm import selectinload
 from sqlalchemy.exc import IntegrityError, NoResultFound
 
 from .base import Base
-from .models import User, APIKey, UserSession, UserStatus, APIKeyStatus
+from .models import User, Post
 
 logger = logging.getLogger(__name__)
 
@@ -257,9 +257,10 @@ class BaseRepository(Generic[T], ABC):
 
 class UserRepository(BaseRepository[User]):
     """
-    Repository for User model operations.
+    Example repository for User model operations.
 
-    Provides user-specific database operations and queries.
+    This serves as a template for implementing domain-specific repositories.
+    Shows common patterns for custom queries and business logic.
     """
 
     def __init__(self, session: AsyncSession):
@@ -269,11 +270,7 @@ class UserRepository(BaseRepository[User]):
         """
         Get user by username.
 
-        Args:
-            username: Username to search for
-
-        Returns:
-            User instance or None if not found
+        Example of a custom query method that extends the base repository.
         """
         result = await self.session.execute(
             select(User).where(User.username == username)
@@ -284,90 +281,64 @@ class UserRepository(BaseRepository[User]):
         """
         Get user by email.
 
-        Args:
-            email: Email to search for
-
-        Returns:
-            User instance or None if not found
+        Another example of a domain-specific query method.
         """
         result = await self.session.execute(
             select(User).where(User.email == email)
         )
         return result.scalar_one_or_none()
 
-    async def get_by_username_or_email(self, identifier: str) -> Optional[User]:
+    async def get_active_users(self, limit: int = 100) -> List[User]:
         """
-        Get user by username or email.
+        Get active users.
 
-        Args:
-            identifier: Username or email to search for
-
-        Returns:
-            User instance or None if not found
+        Example of a business logic query that filters by status.
         """
         result = await self.session.execute(
-            select(User).where(
-                or_(User.username == identifier, User.email == identifier)
-            )
+            select(User)
+            .where(User.is_active == True)
+            .limit(limit)
         )
-        return result.scalar_one_or_none()
-
-    async def create_user(
-        self,
-        username: str,
-        email: str,
-        hashed_password: str,
-        **kwargs
-    ) -> User:
-        """
-        Create a new user.
-
-        Args:
-            username: Unique username
-            email: Unique email address
-            hashed_password: Bcrypt hashed password
-            **kwargs: Additional user fields
-
-        Returns:
-            Created user instance
-
-        Raises:
-            DuplicateError: If username or email already exists
-        """
-        return await self.create(
-            username=username,
-            email=email,
-            hashed_password=hashed_password,
-            **kwargs
-        )
+        return list(result.scalars().all())
 
 
-class APIKeyRepository(BaseRepository[APIKey]):
+class PostRepository(BaseRepository[Post]):
     """
-    Repository for API Key model operations.
+    Example repository for Post model operations.
 
-    Provides API key-specific database operations and queries.
+    Demonstrates relationship handling and complex queries.
     """
 
     def __init__(self, session: AsyncSession):
-        super().__init__(session, APIKey)
+        super().__init__(session, Post)
 
-    async def get_by_key_hash(self, key_hash: str) -> Optional[APIKey]:
+    async def get_by_author(self, author_id: str) -> List[Post]:
         """
-        Get API key by hash.
+        Get posts by author.
 
-        Args:
-            key_hash: Hashed API key value
-
-        Returns:
-            APIKey instance or None if not found
+        Example of querying with relationships.
         """
         result = await self.session.execute(
-            select(APIKey)
-            .options(selectinload(APIKey.user))
-            .where(APIKey.key_hash == key_hash)
+            select(Post)
+            .options(selectinload(Post.author))
+            .where(Post.author_id == author_id)
         )
-        return result.scalar_one_or_none()
+        return list(result.scalars().all())
+
+    async def get_published_posts(self, limit: int = 100) -> List[Post]:
+        """
+        Get published posts.
+
+        Example of filtering by business logic status.
+        """
+        result = await self.session.execute(
+            select(Post)
+            .options(selectinload(Post.author))
+            .where(Post.is_published == True)
+            .order_by(Post.published_at.desc())
+            .limit(limit)
+        )
+        return list(result.scalars().all())
 
 
 # Repository factory for dependency injection
@@ -376,6 +347,7 @@ class RepositoryFactory:
     Factory class for creating repository instances.
 
     Provides a centralized way to create repositories with proper session management.
+    This pattern makes it easy to inject repositories into services and controllers.
     """
 
     def __init__(self, session: AsyncSession):
@@ -383,10 +355,19 @@ class RepositoryFactory:
 
     @property
     def users(self) -> UserRepository:
-        """Get user repository."""
+        """Get user repository instance."""
         return UserRepository(self.session)
 
     @property
-    def api_keys(self) -> APIKeyRepository:
-        """Get API key repository."""
-        return APIKeyRepository(self.session)
+    def posts(self) -> PostRepository:
+        """Get post repository instance."""
+        return PostRepository(self.session)
+
+    def get_repository(self, model_class: Type[T]) -> BaseRepository[T]:
+        """
+        Get a generic repository for any model class.
+
+        This is useful for creating repositories dynamically
+        or for models that don't need custom repository methods.
+        """
+        return BaseRepository(self.session, model_class)

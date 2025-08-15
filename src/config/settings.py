@@ -148,20 +148,27 @@ def validate_configuration() -> None:
 
         # Database URL validation (not required for test environment)
         if current_env != "test":
-            if not settings.get("database_url"):
+            try:
+                database_url = getattr(settings, "database_url", None)
+                if not database_url:
+                    raise ConfigurationError("Database URL is required for non-test environments")
+                if not isinstance(database_url, str):
+                    raise ConfigurationError("Database URL must be a string")
+            except AttributeError:
                 raise ConfigurationError("Database URL is required for non-test environments")
-            if not isinstance(settings.get("database_url"), str):
-                raise ConfigurationError("Database URL must be a string")
 
         if current_env == "production":
             # Production-specific validations
-            if settings.debug:
+            debug_mode = getattr(settings, "debug", False)
+            if debug_mode:
                 raise ConfigurationError("Debug mode should be disabled in production")
 
-            if settings.secret_key == "your-super-secret-key-change-this-in-production":
+            secret_key = getattr(settings, "secret_key", "")
+            if secret_key == "your-super-secret-key-change-this-in-production":
                 raise ConfigurationError("Default secret key detected in production")
 
-            if not settings.get("sentry_dsn"):
+            sentry_dsn = getattr(settings, "sentry_dsn", None)
+            if not sentry_dsn:
                 raise ConfigurationError("Sentry DSN is required in production")
 
         # Validate CORS origins format
@@ -275,12 +282,13 @@ def get_feature_flags() -> Dict[str, bool]:
 def print_configuration_summary() -> None:
     """Print a summary of the current configuration (for debugging)."""
     print(f"Environment: {get_environment()}")
-    print(f"Debug mode: {settings.debug}")
-    print(f"App name: {settings.app_name}")
-    print(f"Version: {settings.version}")
-    print(f"Host: {settings.host}:{settings.port}")
-    print(f"Database: {settings.database_url.split('@')[-1] if '@' in settings.database_url else 'Not configured'}")
-    print(f"Redis: {settings.redis_url}")
+    print(f"Debug mode: {getattr(settings, 'debug', False)}")
+    print(f"App name: {getattr(settings, 'app_name', 'Unknown')}")
+    print(f"Version: {getattr(settings, 'version', 'Unknown')}")
+    print(f"Host: {getattr(settings, 'host', 'localhost')}:{getattr(settings, 'port', 8000)}")
+    database_url = getattr(settings, 'database_url', 'Not configured')
+    print(f"Database: {database_url.split('@')[-1] if '@' in database_url else 'Not configured'}")
+    print(f"Redis: {getattr(settings, 'redis_url', 'Not configured')}")
     print(f"Log level: {settings.log_level}")
     print(f"Metrics enabled: {settings.metrics_enabled}")
 

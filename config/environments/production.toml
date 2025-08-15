@@ -26,10 +26,8 @@ observability_track_performance = true
 # Production structured logging
 mask_sensitive_logs = true  # Always mask sensitive data in production logs
 
-# Production features
-feature_registration_enabled = true
-feature_email_verification = true
-feature_social_login = true
+# Production features - customize for your application
+feature_example_enabled = true
 
 # Production performance
 workers = 4

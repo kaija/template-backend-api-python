@@ -238,7 +238,7 @@ class ServiceInfoProcessor:
         """Initialize service info processor."""
         from src.config.settings import get_environment
         self.service_info = {
-            "service": getattr(settings, "app_name", "production-api-framework"),
+            "service": getattr(settings, "app_name", "generic-api-framework"),
             "version": getattr(settings, "version", "0.1.0"),
             "environment": get_environment(),
         }
@@ -559,7 +559,7 @@ logger = get_logger(__name__)
 def setup_logging() -> None:
     """
     Set up logging configuration.
-    
+
     This function is provided for backward compatibility and testing.
     The actual configuration is done automatically when the module is imported.
     """

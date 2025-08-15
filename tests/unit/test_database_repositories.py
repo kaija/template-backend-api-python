@@ -10,13 +10,13 @@ from sqlalchemy.exc import IntegrityError
 from src.database.repositories import (
     BaseRepository,
     UserRepository,
-    APIKeyRepository,
+    PostRepository,
     RepositoryFactory,
     RepositoryError,
     NotFoundError,
     DuplicateError,
 )
-from src.database.models import User, APIKey, UserStatus, APIKeyStatus
+from src.database.models import User, Post, UserStatus
 
 
 # Use the actual User model for testing instead of a mock
@@ -39,13 +39,12 @@ class TestBaseRepository:
     @pytest.mark.asyncio
     async def test_create_success(self, repository, mock_session):
         """Test successful record creation."""
-        # Mock the User instance that would be created
-        mock_user = User(
-            id="new_id",
-            username="testuser",
-            email="test@example.com",
-            hashed_password="hashed_password"
-        )
+        # Create a mock user instance
+        mock_user = Mock()
+        mock_user.id = "new_id"
+        mock_user.username = "testuser"
+        mock_user.email = "test@example.com"
+        mock_user.hashed_password = "hashed_password"
         
         # Mock session methods
         mock_session.add = Mock()
@@ -67,29 +66,40 @@ class TestBaseRepository:
     @pytest.mark.asyncio
     async def test_create_duplicate_error(self, repository, mock_session):
         """Test creation with duplicate constraint violation."""
-        # Mock IntegrityError
+        # Create a mock user instance
+        mock_user = Mock()
+        mock_user.id = "new_id"
+        mock_user.username = "testuser"
+        mock_user.email = "test@example.com"
+        mock_user.hashed_password = "hashed_password"
+        
+        # Mock session methods
         mock_session.add = Mock()
         mock_session.flush = AsyncMock(side_effect=IntegrityError("", "", ""))
         mock_session.rollback = AsyncMock()
         
-        with pytest.raises(DuplicateError):
-            await repository.create(
-                username="testuser",
-                email="test@example.com",
-                hashed_password="hashed_password"
-            )
+        # Mock the User constructor to return our mock instance
+        with patch.object(User, '__new__', return_value=mock_user):
+            with pytest.raises(DuplicateError):
+                await repository.create(
+                    username="testuser",
+                    email="test@example.com",
+                    hashed_password="hashed_password"
+                )
+        
+        mock_session.rollback.assert_called_once()
         
         mock_session.rollback.assert_called_once()
     
     @pytest.mark.asyncio
     async def test_get_by_id_found(self, repository, mock_session):
         """Test getting record by ID when found."""
-        mock_user = User(
-            id="test_id",
-            username="testuser",
-            email="test@example.com",
-            hashed_password="hashed_password"
-        )
+        mock_user = Mock()
+        mock_user.id = "test_id"
+        mock_user.username = "testuser"
+        mock_user.email = "test@example.com"
+        mock_user.hashed_password = "hashed_password"
+        
         mock_result = Mock()
         mock_result.scalar_one_or_none.return_value = mock_user
         mock_session.execute = AsyncMock(return_value=mock_result)
@@ -113,12 +123,11 @@ class TestBaseRepository:
     @pytest.mark.asyncio
     async def test_get_by_id_or_raise_found(self, repository, mock_session):
         """Test getting record by ID or raise when found."""
-        mock_user = User(
-            id="test_id",
-            username="testuser",
-            email="test@example.com",
-            hashed_password="hashed_password"
-        )
+        mock_user = Mock()
+        mock_user.id = "test_id"
+        mock_user.username = "testuser"
+        mock_user.email = "test@example.com"
+        mock_user.hashed_password = "hashed_password"
         
         with patch.object(repository, 'get_by_id', return_value=mock_user):
             result = await repository.get_by_id_or_raise("test_id")
@@ -134,12 +143,11 @@ class TestBaseRepository:
     @pytest.mark.asyncio
     async def test_update_success(self, repository, mock_session):
         """Test successful record update."""
-        mock_user = User(
-            id="test_id",
-            username="testuser",
-            email="test@example.com",
-            hashed_password="hashed_password"
-        )
+        mock_user = Mock()
+        mock_user.id = "test_id"
+        mock_user.username = "testuser"
+        mock_user.email = "test@example.com"
+        mock_user.hashed_password = "hashed_password"
         
         with patch.object(repository, 'get_by_id_or_raise', return_value=mock_user):
             mock_session.flush = AsyncMock()
@@ -177,14 +185,15 @@ class TestBaseRepository:
     @pytest.mark.asyncio
     async def test_list_all(self, repository, mock_session):
         """Test listing all records."""
-        mock_users = [
-            User(
-                id=f"id_{i}",
-                username=f"user_{i}",
-                email=f"user_{i}@example.com",
-                hashed_password="hashed_password"
-            ) for i in range(3)
-        ]
+        mock_users = []
+        for i in range(3):
+            mock_user = Mock()
+            mock_user.id = f"id_{i}"
+            mock_user.username = f"user_{i}"
+            mock_user.email = f"user_{i}@example.com"
+            mock_user.hashed_password = "hashed_password"
+            mock_users.append(mock_user)
+            
         mock_result = Mock()
         mock_scalars = Mock()
         mock_scalars.all.return_value = mock_users
@@ -246,11 +255,11 @@ class TestUserRepository:
     @pytest.mark.asyncio
     async def test_get_by_username(self, user_repository, mock_session):
         """Test getting user by username."""
-        mock_user = User(
-            username="testuser",
-            email="test@example.com",
-            hashed_password="hashed"
-        )
+        mock_user = Mock()
+        mock_user.username = "testuser"
+        mock_user.email = "test@example.com"
+        mock_user.hashed_password = "hashed"
+        
         mock_result = Mock()
         mock_result.scalar_one_or_none.return_value = mock_user
         mock_session.execute = AsyncMock(return_value=mock_result)
@@ -263,11 +272,11 @@ class TestUserRepository:
     @pytest.mark.asyncio
     async def test_get_by_email(self, user_repository, mock_session):
         """Test getting user by email."""
-        mock_user = User(
-            username="testuser",
-            email="test@example.com",
-            hashed_password="hashed"
-        )
+        mock_user = Mock()
+        mock_user.username = "testuser"
+        mock_user.email = "test@example.com"
+        mock_user.hashed_password = "hashed"
+        
         mock_result = Mock()
         mock_result.scalar_one_or_none.return_value = mock_user
         mock_session.execute = AsyncMock(return_value=mock_result)
@@ -278,36 +287,39 @@ class TestUserRepository:
         mock_session.execute.assert_called_once()
     
     @pytest.mark.asyncio
-    async def test_get_by_username_or_email(self, user_repository, mock_session):
-        """Test getting user by username or email."""
-        mock_user = User(
-            username="testuser",
-            email="test@example.com",
-            hashed_password="hashed"
-        )
+    async def test_get_active_users(self, user_repository, mock_session):
+        """Test getting active users."""
+        mock_users = []
+        for i in range(2):
+            mock_user = Mock()
+            mock_user.id = f"user_{i}"
+            mock_user.username = f"user_{i}"
+            mock_user.email = f"user_{i}@example.com"
+            mock_user.is_active = True
+            mock_users.append(mock_user)
+        
         mock_result = Mock()
-        mock_result.scalar_one_or_none.return_value = mock_user
+        mock_scalars = Mock()
+        mock_scalars.all.return_value = mock_users
+        mock_result.scalars.return_value = mock_scalars
         mock_session.execute = AsyncMock(return_value=mock_result)
         
-        # Test with username
-        result = await user_repository.get_by_username_or_email("testuser")
-        assert result == mock_user
+        result = await user_repository.get_active_users()
         
-        # Test with email
-        result = await user_repository.get_by_username_or_email("test@example.com")
-        assert result == mock_user
+        assert len(result) == 2
+        assert all(user.is_active for user in result)
+        mock_session.execute.assert_called_once()
     
     @pytest.mark.asyncio
     async def test_create_user(self, user_repository, mock_session):
         """Test creating a new user."""
-        mock_user = User(
-            username="testuser",
-            email="test@example.com",
-            hashed_password="hashed"
-        )
+        mock_user = Mock()
+        mock_user.username = "testuser"
+        mock_user.email = "test@example.com"
+        mock_user.hashed_password = "hashed"
         
         with patch.object(user_repository, 'create', return_value=mock_user) as mock_create:
-            result = await user_repository.create_user(
+            result = await user_repository.create(
                 username="testuser",
                 email="test@example.com",
                 hashed_password="hashed"
@@ -321,8 +333,8 @@ class TestUserRepository:
             )
 
 
-class TestAPIKeyRepository:
-    """Test APIKeyRepository functionality."""
+class TestPostRepository:
+    """Test PostRepository functionality."""
     
     @pytest.fixture
     def mock_session(self):
@@ -330,26 +342,50 @@ class TestAPIKeyRepository:
         return AsyncMock(spec=AsyncSession)
     
     @pytest.fixture
-    def api_key_repository(self, mock_session):
-        """APIKeyRepository instance with mock session."""
-        return APIKeyRepository(mock_session)
+    def post_repository(self, mock_session):
+        """PostRepository instance with mock session."""
+        return PostRepository(mock_session)
     
     @pytest.mark.asyncio
-    async def test_get_by_key_hash(self, api_key_repository, mock_session):
-        """Test getting API key by hash."""
-        mock_api_key = APIKey(
-            name="Test Key",
-            key_hash="hashed_key",
-            key_prefix="ak_test",
-            user_id="user_123"
-        )
+    async def test_get_by_author(self, post_repository, mock_session):
+        """Test getting posts by author."""
+        mock_post = Mock()
+        mock_post.title = "Test Post"
+        mock_post.content = "Test content"
+        mock_post.author_id = "user_123"
+        
         mock_result = Mock()
-        mock_result.scalar_one_or_none.return_value = mock_api_key
+        mock_scalars = Mock()
+        mock_scalars.all.return_value = [mock_post]
+        mock_result.scalars.return_value = mock_scalars
         mock_session.execute = AsyncMock(return_value=mock_result)
         
-        result = await api_key_repository.get_by_key_hash("hashed_key")
+        result = await post_repository.get_by_author("user_123")
         
-        assert result == mock_api_key
+        assert len(result) == 1
+        assert result[0] == mock_post
+        mock_session.execute.assert_called_once()
+    
+    @pytest.mark.asyncio
+    async def test_get_published_posts(self, post_repository, mock_session):
+        """Test getting published posts."""
+        mock_post = Mock()
+        mock_post.title = "Published Post"
+        mock_post.content = "Published content"
+        mock_post.author_id = "user_123"
+        mock_post.is_published = True
+        
+        mock_result = Mock()
+        mock_scalars = Mock()
+        mock_scalars.all.return_value = [mock_post]
+        mock_result.scalars.return_value = mock_scalars
+        mock_session.execute = AsyncMock(return_value=mock_result)
+        
+        result = await post_repository.get_published_posts()
+        
+        assert len(result) == 1
+        assert result[0] == mock_post
+        assert result[0].is_published is True
         mock_session.execute.assert_called_once()
 
 
@@ -372,11 +408,11 @@ class TestRepositoryFactory:
         assert isinstance(users_repo, UserRepository)
         assert users_repo.session == repository_factory.session
     
-    def test_api_keys_property(self, repository_factory):
-        """Test api_keys repository property."""
-        api_keys_repo = repository_factory.api_keys
-        assert isinstance(api_keys_repo, APIKeyRepository)
-        assert api_keys_repo.session == repository_factory.session
+    def test_posts_property(self, repository_factory):
+        """Test posts repository property."""
+        posts_repo = repository_factory.posts
+        assert isinstance(posts_repo, PostRepository)
+        assert posts_repo.session == repository_factory.session
 
 
 class TestRepositoryExceptions:
@@ -420,9 +456,9 @@ class TestRepositoryIntegration:
         mock_session = AsyncMock(spec=AsyncSession)
         
         user_repo = UserRepository(mock_session)
-        api_key_repo = APIKeyRepository(mock_session)
+        post_repo = PostRepository(mock_session)
         
         # Both repositories should share the same session
         assert user_repo.session == mock_session
-        assert api_key_repo.session == mock_session
-        assert user_repo.session == api_key_repo.session
+        assert post_repo.session == mock_session
+        assert user_repo.session == post_repo.session

@@ -1,6 +1,6 @@
 # Default application settings
 [default]
-app_name = "Production API Framework"
+app_name = "Generic API Framework"
 version = "0.1.0"
 debug = false
 
@@ -12,8 +12,8 @@ port = 8000
 api_prefix = "/api"
 version_prefix = "/v1"
 
-# Database settings
-database_url = "postgresql+asyncpg://postgres:password@localhost:5432/api_dev"
+# Database settings - customize for your application
+database_url = "postgresql+asyncpg://postgres:password@localhost:5432/your_app_db"
 db_pool_size = 10
 db_max_overflow = 20
 db_pool_timeout = 30
@@ -24,8 +24,8 @@ redis_url = "redis://localhost:6379/0"
 redis_max_connections = 10
 redis_retry_on_timeout = true
 
-# JWT settings
-secret_key = "development-secret-key-change-this-in-production-environments"
+# JWT settings - CHANGE THESE FOR YOUR APPLICATION
+secret_key = "your-secret-key-change-this-immediately"
 access_token_expire_minutes = 30
 refresh_token_expire_days = 7
 algorithm = "HS256"
@@ -92,21 +92,17 @@ shutdown_timeout = 30
 shutdown_wait_for_connections = true
 shutdown_force_after_timeout = true
 
-# Feature flags
-feature_registration_enabled = true
-feature_email_verification = false
-feature_social_login = false
+# Feature flags - customize for your application
+feature_example_enabled = true
+# Add your own feature flags here
 
 # Documentation settings
 docs_enabled_in_production = false
 docs_require_auth = true
-docs_api_key = "your-docs-api-key-here"
+docs_api_key = "change-this-docs-api-key"
 docs_api_key_header = "X-Docs-API-Key"
-docs_allowed_roles = ["admin", "developer"]
 
-# Swagger UI OAuth2 settings
+# Swagger UI OAuth2 settings - configure if needed
 swagger_oauth2_enabled = false
-swagger_oauth2_client_id = "swagger-ui"
-swagger_oauth2_client_secret = ""
-swagger_oauth2_realm = "swagger-ui-realm"
+swagger_oauth2_client_id = "your-client-id"
 swagger_oauth2_redirect_url = "/docs/oauth2-redirect"

@@ -1,9 +1,9 @@
 """
 Pytest configuration and shared fixtures.
 
-This module provides pytest configuration and shared fixtures for testing
-the FastAPI application with async support, database transactions, and
-test data factories.
+This module provides generic pytest configuration and shared fixtures for testing
+FastAPI applications. It demonstrates common testing patterns and can be adapted
+for different application domains.
 """
 
 import asyncio

@@ -41,10 +41,10 @@ fi
 
 # Check if Dockerfile builds successfully
 echo "🏗️  Testing Docker image build..."
-if docker build -t production-api-framework:validation-test . > /dev/null 2>&1; then
+if docker build -t generic-api-framework:validation-test . > /dev/null 2>&1; then
     echo "✅ Docker image builds successfully"
     # Clean up test image
-    docker rmi production-api-framework:validation-test > /dev/null 2>&1
+    docker rmi generic-api-framework:validation-test > /dev/null 2>&1
 else
     echo "❌ Docker image build failed"
     exit 1

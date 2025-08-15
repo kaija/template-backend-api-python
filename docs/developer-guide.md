@@ -22,7 +22,7 @@ This guide covers the essential development workflows for the Production API Fra
 1. **Clone and setup the project**:
 ```bash
 git clone <repository-url>
-cd production-api-framework
+cd generic-api-framework
 poetry install
 poetry run pre-commit install
 ```

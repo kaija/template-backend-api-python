@@ -36,7 +36,7 @@ app_info = Info(
 
 # Set application info
 app_info.info({
-    "name": getattr(settings, "app_name", "production-api-framework"),
+    "name": getattr(settings, "app_name", "generic-api-framework"),
     "version": getattr(settings, "version", "0.1.0"),
     "environment": getattr(settings, "env", "development"),
 })
